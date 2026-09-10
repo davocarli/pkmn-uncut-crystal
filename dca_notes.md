@@ -1,0 +1,3 @@
+- To find location/offset of a piece of memory in .sav...
+    - You're given an address as xx:yyyy
+    - Perform xx * $2000 + ($A000 - $yyyy)

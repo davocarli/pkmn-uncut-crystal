@@ -1,0 +1,126 @@
+# Labels this project depends on, one per line, copied verbatim from the handoff doc §8.
+# Input to tools/symdiff.py, which resolves each against both .sym files.
+# Names that fail to resolve are STALE (renamed in current pokecrystal) and must be fixed here.
+# Constants (MOBILE_EVENT_*, BATTLETYPE_*, EVENT_*, MUSIC_*, SPRITE_*) are EQU values, not
+# addresses, so they never appear in a .sym file; resolve those from constants/*.asm instead.
+
+# --- SRAM ---
+# was sMobileEventIndex in the handoff doc
+sGSBallFlag
+# was sMobileEventIndexBackup
+sGSBallFlagBackup
+sChecksum
+sBackupChecksum
+sMysteryGiftItem
+sMysteryGiftUnlocked
+sMysteryGiftDecorationsReceived
+sMysteryGiftTrainer
+sMysteryGiftTrainerHouseFlag
+sBox1
+sBox7
+sBox8
+sBox14
+sLuckyNumberDay
+sRTCStatusFlags
+
+# --- WRAM ---
+wOptions
+wTextDelayFrames
+wBattleType
+wBattleMode
+wBattleResult
+wTempWildMonSpecies
+wCurPartyLevel
+wOtherTrainerClass
+wOtherTrainerID
+wMapGroup
+wMapNumber
+wXCoord
+wYCoord
+wStepCount
+wPlayerState
+wRepelEffect
+wPhoneList
+wSpecialPhoneCallID
+wEventFlags
+wRoamMon1
+wRoamMon2
+wRoamMon3
+wContestMon
+wParkBallsRemaining
+wStatusFlags
+wStatusFlags2
+wMapObjects
+wMap1Object
+wUsedSprites
+wObjectMasks
+wMapTileset
+wEnvironment
+wMapAttributesPointer
+wMapBorderBlock
+wMapHeight
+wMapWidth
+wMapBlocksBank
+wMapBlocksPointer
+wMapScriptsBank
+wMapScriptsPointer
+wMapEventsPointer
+wMapConnections
+# was wCurMapWarpsPointer
+wCurMapWarpEventsPointer
+wCurMapCoordEventsPointer
+wCurMapBGEventsPointer
+wCurMapObjectEventsPointer
+wCurMapSceneScriptsPointer
+wCurMapCallbacksPointer
+wRadioTuningKnob
+wPokegearRadioMusicPlaying
+wPokegearFlags
+wCurPartyMon
+wPutativeTMHMMove
+wCurPartySpecies
+wPartyMon1Moves
+wPartyMon1PP
+wPokedexCaught
+wMoney
+
+# --- ROM routines / tables ---
+OpenSRAM
+CloseSRAM
+PlayMusic
+UpdateRadioStation
+NoRadioStation
+CheckPartyMove
+CheckEngineFlag
+CanLearnTMHMMove
+FlyFunction
+FlashFunction
+DoPlayerMovement
+CopyMapAttributes
+ReadObjectEvents
+InitializeVisibleSprites
+LoadUsedSpritesGFX
+# was _MoveRoamMons; note .SkipRaikou/.SkipEntei locals
+UpdateRoamMons
+JumpRoamMons
+CheckEncounterRoamMon
+InitRoamMons
+RegionCheck
+LoadEnemyMon
+DoBattleTransition
+StartBattle
+BattleIntro
+LoadMenuHeader
+VerticalMenu
+PlaceString
+PrintNum
+JoyWaitAorB
+TakeMoney
+GetMoveName
+EvosAttacksPointers
+# EvosAttacks: no single label; EvosAttacksPointers points at per-species <Name>EvosAttacks
+RadioChannels
+RoamMaps
+FleeMons
+# EnableGSBallScene: not in pokecrystal (pret wiki tutorial code); see README §7.1
+BattleTowerAction

@@ -1,0 +1,10 @@
+build/
+*.sav
+*.srm
+*.sn?
+__pycache__/
+.DS_Store
+*.dat
+
+# fetched third-party wiki pages + session working notes (not ours to redistribute)
+.research/
