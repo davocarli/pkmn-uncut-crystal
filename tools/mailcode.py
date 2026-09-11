@@ -120,7 +120,9 @@ def written_bytes(payloads):
     mem = {}
     for payload in payloads:
         # walk the code, each copy's data follows the previous one
-        src = None
+        src = 0
+        addr = 0
+        count = 0
         i = 0
         bank = None
         while payload[i] != RET[0]:
