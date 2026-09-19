@@ -8,7 +8,7 @@
 INCLUDE "constants/hardware.inc"
 
 DEF CloseSRAM           EQU $2FE1
-DEF CopyBytes           EQU $3026
+DEF CopyBytes           EQU $3026 ; source address in hl, destination in de, length in bc
 DEF wUCLoaded           EQU $CFD8 ; wram0 flag, two bytes, set by UCInit when the kernel is up
 DEF UC_LOADED_1         EQU $4B
 DEF UC_LOADED_2         EQU $53
@@ -39,27 +39,27 @@ DEF UC_SLOT4_LEN      EQU $B200 - UC_SLOT4_IMAGE
 DEF UC_IMAGE_BASE       EQU $AC6B ; base address of the kernel image in SRAM bank 0
 
 SECTION "uc kernel", ROM0[$0080]
-LOAD "uc kernel wram", WRAMX[$D000], BANK[4]
+LOAD "uc kernel wram", WRAMX[$D000], BANK[4] ; Run in Bank 4
 
 ; header. UCFrameStub and the loader jump to $D002 / $D005, don't move these
-UCKernel::
-    db UC_SIG_1, UC_SIG_2
-    jp UCFrame
-    jp UCStepEntry
+UCKernel:: ; $D000
+    db UC_SIG_1, UC_SIG_2 ; Kernel signature at $D000
+    jp UCFrame ; $D002
+    jp UCStepEntry ; $D005
 
 wUCState:
-    db 0
+    db 0 ; wUCState, 0 = not loaded, 1 = loaded
 
 ; stage 1 must hold everything the first pass needs: this, UCInit, nothing else
 UCStepEntry::
-    ld a, [wUCState]
-    and a
-    jp z, UCInit
-    jp UCStep
+    ld a, [wUCState] ; Check state, load into a
+    and a ; "if a == 0" -- result stored in z
+    jp z, UCInit ; jump to init
+    jp UCStep ; otherwise, jump to the main step routine
 
 ; first UCStep after a reset. sram bank 0 still open
 UCInit::
-    ld hl, UC_IMAGE_BASE + (UCStage1End - UCKernel) + UCStubsEnd - UCFrameStub
+    ld hl, UC_IMAGE_BASE + (UCStage1End - UCKernel) + UCStubsEnd - UCFrameStub ; source address in SRAM
     ld de, UCPokeB1
     ld bc, UCPokeB1End - UCPokeB1
     call CopyBytes

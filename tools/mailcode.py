@@ -4,7 +4,7 @@ Output is hex for TimoVM's MailConverter, 16 bytes per line like his guides.
 """
 
 import sys
-from patcher import uc_core_writes
+from patcher import uc_core_writes, uc_runtime_writes, UC_SLOT4_IMAGES
 
 MAIL_BASE = 0xD280  # wOTPartyCount, where the mail writer writes payloads
 MAIL_MAX = 416  # 26 mail limit
@@ -157,12 +157,28 @@ def written_bytes(payloads):
     return mem
 
 
+def writes_for(name):
+    """core, runtime (every slot 4 image), or one image by its start label"""
+    if name == "core":
+        return uc_core_writes()
+    if name == "runtime":
+        return uc_runtime_writes()
+    for image in UC_SLOT4_IMAGES:
+        if image[0] == name:
+            return uc_runtime_writes([image])
+    raise SystemExit(f"unknown target {name}: core, runtime, or one of "
+                     + ", ".join(start for start, _ in UC_SLOT4_IMAGES))
+
+
 def main(argv):
-    payloads = installers(uc_core_writes())
+    if len(argv) < 2:
+        print(f"usage: {argv[0]} core|runtime|<image> [prefix]", file=sys.stderr)
+        return 2
+    payloads = installers(writes_for(argv[1]))
     print(format_codes(payloads))
-    if len(argv) > 1:
+    if len(argv) > 2:
         for n, payload in enumerate(payloads, 1):
-            with open(f"{argv[1]}-{n}.bin", "wb") as f:
+            with open(f"{argv[2]}-{n}.bin", "wb") as f:
                 f.write(payload)
     return 0
 

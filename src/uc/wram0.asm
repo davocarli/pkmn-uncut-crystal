@@ -50,13 +50,13 @@ ENDL
 ; [hl] = a in bank 1. call from bank 4 only. lives in the other WRAM0 gap, UCInit copies it
 LOAD "uc pokeb1", WRAM0[$CD14]
 UCPokeB1::
-    push af
-    ld a, 1
-    ldh [rWBK], a
-    pop af
-    ld [hl], a
-    ld a, 4
-    ldh [rWBK], a
+    push af ; save a before switching to bank 1
+    ld a, 1 ; select bank 1
+    ldh [rWBK], a ; set WRAM bank to 1
+    pop af ; take a back!
+    ld [hl], a ; write value of a (set by caller) to [hl] in bank 1
+    ld a, 4 ; select bank 4
+    ldh [rWBK], a ; set WRAM bank back to 4
     ret
 
 UCPokeB1End::

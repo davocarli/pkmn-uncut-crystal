@@ -101,6 +101,14 @@ W_UC_LOADER = 0xDA47
 W_UC_PARKED_CALL = 0xDA0E
 UC_IMAGE_BANK = 0
 UC_IMAGE_OFFSET = 0xAC6B
+UC_SLOT4_BASE = 0xD200  # bank 4, loaded from UC_SLOT4_IMAGE by the kernel
+UC_SLOT4_IMAGE = 0xAE6B  # sram bank 0
+UC_SLOT4_LEN = 0xB200 - UC_SLOT4_IMAGE  # what the kernel copies
+# every slot 4 image: (start, end) labels in uc.sym. offset in uc.bin = addr - $D000
+UC_SLOT4_IMAGES = [
+    ("UCSlot4", "UCSlot4End"),
+    ("UCGSBall", "UCGSBallEnd"),
+]
 
 
 def sav_offset(bank: int, addr: int) -> int:
@@ -188,6 +196,42 @@ def uc_core_writes():
         (None, W_UC_HOOK_CALL, UC_HOOK_CALL_NEW),
         (None, W_UC_REINSTALL_CALL, UC_REINSTALL_CALL_NEW),
     ]
+
+
+def check_uc_core(sav: bytearray):
+    """Check that the UC core's two call redirects are in place"""
+    for addr, new in (
+        (W_UC_HOOK_CALL, UC_HOOK_CALL_NEW),
+        (W_UC_REINSTALL_CALL, UC_REINSTALL_CALL_NEW),
+    ):
+        for block in BLOCKS:
+            offset = wram_to_sav(addr, block)
+            if sav[offset : offset + 2] != new:
+                raise SystemExit(
+                    f"Unexpected value at {addr:#x} in block {block}. Please install the uc core first."
+                )
+
+
+def install_uc_runtime(sav: bytearray):
+    """Install the UC Runtime into slot 4"""
+    check_uc_core(sav)
+    patch_save(sav, uc_runtime_writes())
+
+
+def uc_runtime_writes(images=UC_SLOT4_IMAGES):
+    """List of writes to be performed to install the UC runtime, one per image"""
+    with open(UC_BIN, "rb") as f:
+        bindata = f.read()
+    symdata = read_sym(UC_SYM)
+    writes = []
+    for start, end in images:
+        addr, end_addr = symdata[start], symdata[end]
+        if end_addr - UC_SLOT4_BASE > UC_SLOT4_LEN:
+            raise ValueError(f"{start} ends past the slot 4 window")
+        offset = addr - 0xD000
+        image = bindata[offset : offset + end_addr - addr]
+        writes.append((UC_IMAGE_BANK, UC_SLOT4_IMAGE + addr - UC_SLOT4_BASE, image))
+    return writes
 
 
 def add_item(sav: bytearray, block: str, item: int, qty: int = 1) -> str:
@@ -345,7 +389,8 @@ def main(argv: list[str]) -> int:
         f"       {argv[0]} sentinel-check <in.sav>       (report gap bytes the game touched)\n"
         f"       {argv[0]} install-timovm <in.sav> <out.sav>  (option (a): Mail Writer + TM15 bootstrap)\n"
         f"       {argv[0]} install-dma-hijack <in.sav> <out.sav>  (option (b): Special Call ACE + OAM DMA hook)"
-        f"       {argv[0]} install-uc-core <in.sav> <out.sav>     (Uncut Crystal core: loader + kernel image)"
+        f"       {argv[0]} install-uc-core <in.sav> <out.sav>     (Uncut Crystal core: loader + kernel image)\n"
+        f"       {argv[0]} install-uc-runtime <in.sav> <out.sav>  (Uncut Crystal runtime: slot 4 image)"
     )
     if len(argv) < 3:
         print(usage, file=sys.stderr)
@@ -403,9 +448,12 @@ def main(argv: list[str]) -> int:
         report(patched)
         return 0
 
-    if cmd == "install-uc-core" and len(argv) == 4:
+    if cmd in ("install-uc-core", "install-uc-runtime") and len(argv) == 4:
         patched = bytearray(sav)
-        install_uc_core(patched)
+        if cmd == "install-uc-core":
+            install_uc_core(patched)
+        else:
+            install_uc_runtime(patched)
         patched = bytes(patched)
         write_save(argv[3], patched, tail)
         changed = sum(1 for a, b in zip(sav, patched) if a != b)
