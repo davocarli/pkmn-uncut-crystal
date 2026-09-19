@@ -69,5 +69,5 @@ Residual risk: a game-code write through a corrupted pointer (a glitch, not norm
 |---|---|---|
 | `03:BE2F–BEEB` | 189 | reserved: TimoVM RAM Writer (optional) |
 | `00:AC6B–AE6A` | 512 | `core` image (stage 1 + WRAM0 stubs + PokeB1), loaded to `04:D000` by the loader/Init |
-| `00:AE6B–B1FF` | 917 | slot 4 image (UC Runtime), loaded to `04:D200` by `core`'s Init; 49 B used as of 2026-09-18 (header + GS Ball) |
+| `00:AE6B–B1FF` | 917 | slot 4 image (UC Runtime), loaded to `04:D200` by `core`'s Init; runtime `$D200` (58 B), GS Ball `$D300` (45 B), Trainer House `$D340` (96 B) as of 2026-09-19; next free `$D3A0` |
 | everything else in the five gaps | 1402 | available to the UC Runtime — to be carved into **fixed per-bundle slots** (README §2a). Skipped bundles leave holes by design. |

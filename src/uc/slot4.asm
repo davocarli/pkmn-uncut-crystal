@@ -49,6 +49,7 @@ RunFeatures: ; Runs the features from the loaded table
     jr .loop ; Repeat the loop
 
 FrameFeatures:
+    dw UCTrainerHouse
     dw 0 ; End of frame features list
 
 StepFeatures:
