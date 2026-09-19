@@ -108,6 +108,7 @@ UC_SLOT4_LEN = 0xB200 - UC_SLOT4_IMAGE  # what the kernel copies
 UC_SLOT4_IMAGES = [
     ("UCSlot4", "UCSlot4End"),
     ("UCGSBall", "UCGSBallEnd"),
+    ("UCTrainerHouse", "UCTrainerHouseEnd"),
 ]
 
 

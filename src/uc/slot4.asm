@@ -36,11 +36,11 @@ RunFeatures: ; Runs the features from the loaded table
     ld h, d ; set the high byte of hl to d
     ld l, e ; Set the low byte of hl to e
     ld a, [hli]
-    cp "U" ; Compare signature of feature
+    cp 'U' ; Compare signature of feature
     jr nz, .next
     ld a, [hli]
-    cp "F"
-    jr nz, .next ; If not "UF", skip -- not installed
+    cp 'C'
+    jr nz, .next ; If not "UC", skip -- not installed
     add hl, bc ; hl points to the feature's code
     call _hl_ ; Call the feature at the address now stored in hl
 .next ; Label to continue to next feature in the table
@@ -53,6 +53,7 @@ FrameFeatures:
 
 StepFeatures:
     dw UCGSBall
+    dw UCTrainerHouse
     dw 0 ; End of step features list
 
 UCSlot4End::

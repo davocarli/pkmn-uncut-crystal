@@ -14,7 +14,7 @@ SECTION "uc gsball", ROM0[$0300]
 LOAD "uc gsball wram", WRAMX[$D300], BANK[4] ; Run from location $D300 in WRAM bank 4
 
 UCGSBall::
-    db "UF" ; Signature to identify the feature is installed
+    db "UC" ; Signature to identify the feature is installed
     jp .frame
     jp .step
 
