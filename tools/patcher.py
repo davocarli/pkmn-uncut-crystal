@@ -101,15 +101,40 @@ W_UC_LOADER = 0xDA47
 W_UC_PARKED_CALL = 0xDA0E
 UC_IMAGE_BANK = 0
 UC_IMAGE_OFFSET = 0xAC6B
-UC_SLOT4_BASE = 0xD200  # bank 4, loaded from UC_SLOT4_IMAGE by the kernel
-UC_SLOT4_IMAGE = 0xAE6B  # sram bank 0
-UC_SLOT4_LEN = 0xB200 - UC_SLOT4_IMAGE  # what the kernel copies
-# every slot 4 image: (start, end) labels in uc.sym. offset in uc.bin = addr - $D000
+# slot 4 windows: (bank 4 base, sram bank, sram addr, length)
+UC_SLOT4_WINDOWS = [
+    (0xD200, 0, 0xAE6B, 0xB200 - 0xAE6B),  # loaded by the kernel's Init
+    (0xD600, 1, 0xBE57, 0xC000 - 0xBE57),  # loaded by the runtime on the first step
+]
+# every slot 4 image: (start, end) labels in uc.sym. offset in uc.bin = addr - $D000;
+# a label outside a LOAD block is the offset itself
 UC_SLOT4_IMAGES = [
     ("UCSlot4", "UCSlot4End"),
     ("UCGSBall", "UCGSBallEnd"),
     ("UCTrainerHouse", "UCTrainerHouseEnd"),
+    ("UCEncounters", "UCEncountersEnd"),
+    ("UCZones", "UCZonesEnd"),
+    ("UCExclusivesTable", "UCExclusivesTableEnd"),
+    ("UCKantoZones", "UCKantoZonesEnd"),
+    ("UCKantoEncounters", "UCKantoEncountersEnd"),
+    # options menu shelved 2026-09-20 (src/uc/shelved/ucoptions.asm), too big for its value
 ]
+
+# Install modules, see docs/modules.md. "bit" is the module's bit in UCModules
+# (None = always on), "images" its own images, "deps" the shared units it needs,
+# "zero" bytes its install must clear (read by others when the unit is absent).
+UC_MODULES = {
+    "base":       {"bit": None, "images": ["UCSlot4", "UCGSBall", "UCTrainerHouse"],
+                   "zero": ["UCZoneCurrent"]},
+    "encounters": {"bit": None, "images": ["UCEncounters"]},
+    "zones":      {"bit": None, "images": ["UCZones"]},
+    "exclusives": {"bit": 0, "images": ["UCExclusivesTable"], "deps": ["encounters"]},
+    "kanto":      {"bit": 1, "images": ["UCKantoZones", "UCKantoEncounters"],
+                   "deps": ["encounters", "zones"]},
+    "cut":        {"bit": 2, "images": [], "deps": ["encounters", "zones"]},
+    "251":        {"bit": 3, "images": [], "deps": ["encounters", "zones"]},
+    "qol":        {"bit": 4, "images": [], "deps": []},
+}
 
 
 def sav_offset(bank: int, addr: int) -> int:
@@ -214,9 +239,37 @@ def check_uc_core(sav: bytearray):
 
 
 def install_uc_runtime(sav: bytearray):
-    """Install the UC Runtime into slot 4"""
+    """Install the UC Runtime into slot 4: every image, every module enabled"""
     check_uc_core(sav)
     patch_save(sav, uc_runtime_writes())
+    mask = 0
+    for module in UC_MODULES.values():
+        if module["bit"] is not None and module["images"]:
+            mask |= 1 << module["bit"]
+    bank, sram = uc_label_sram("UCModules")
+    patch_save(sav, [(bank, sram, bytes([mask]))])
+
+
+def uc_label_sram(label: str):
+    """(bank, sram address) where a slot 4 label lives in the save"""
+    addr = read_sym(UC_SYM)[label]
+    if addr < 0xD000:
+        addr += 0xD000
+    for base, bank, sram, length in UC_SLOT4_WINDOWS:
+        if base <= addr < base + length:
+            return bank, sram + addr - base
+    raise ValueError(f"{label} is outside every slot 4 window")
+
+
+def uc_module_writes(name: str):
+    """Writes that install one module's own images (not its dependencies)"""
+    module = UC_MODULES[name]
+    images = [(start, start + "End") for start in module["images"]]
+    writes = uc_runtime_writes(images) if images else []
+    for label in module.get("zero", []):
+        bank, sram = uc_label_sram(label)
+        writes.append((bank, sram, b"\x00"))
+    return writes
 
 
 def uc_runtime_writes(images=UC_SLOT4_IMAGES):
@@ -227,11 +280,18 @@ def uc_runtime_writes(images=UC_SLOT4_IMAGES):
     writes = []
     for start, end in images:
         addr, end_addr = symdata[start], symdata[end]
-        if end_addr - UC_SLOT4_BASE > UC_SLOT4_LEN:
-            raise ValueError(f"{start} ends past the slot 4 window")
+        if addr < 0xD000:
+            addr, end_addr = addr + 0xD000, end_addr + 0xD000
+        for base, bank, sram, length in UC_SLOT4_WINDOWS:
+            if base <= addr < base + length:
+                break
+        else:
+            raise ValueError(f"{start} is outside every slot 4 window")
+        if end_addr > base + length:
+            raise ValueError(f"{start} ends past its slot 4 window")
         offset = addr - 0xD000
         image = bindata[offset : offset + end_addr - addr]
-        writes.append((UC_IMAGE_BANK, UC_SLOT4_IMAGE + addr - UC_SLOT4_BASE, image))
+        writes.append((bank, sram + addr - base, image))
     return writes
 
 

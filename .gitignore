@@ -8,3 +8,6 @@ __pycache__/
 
 # fetched third-party wiki pages + session working notes (not ours to redistribute)
 .research/
+
+# partner-coding profile and per-feature plans (private working notes)
+.partner-coding/

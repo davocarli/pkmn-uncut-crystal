@@ -4,7 +4,8 @@ Output is hex for TimoVM's MailConverter, 16 bytes per line like his guides.
 """
 
 import sys
-from patcher import uc_core_writes, uc_runtime_writes, UC_SLOT4_IMAGES
+from patcher import (uc_core_writes, uc_runtime_writes, uc_module_writes,
+                     uc_label_sram, UC_SLOT4_IMAGES, UC_MODULES)
 
 MAIL_BASE = 0xD280  # wOTPartyCount, where the mail writer writes payloads
 MAIL_MAX = 416  # 26 mail limit
@@ -82,6 +83,20 @@ def installer_code(writes, start):
     return code + call(CLOSE_SRAM) + RET
 
 
+def bit_code(bank, addr, bit, on):
+    """Standalone payload that sets (on) or clears one bit of an SRAM byte"""
+    op = bytes([0xCB, (0xC6 if on else 0x86) | (bit << 3)])  # set/res bit, [hl]
+    return ld_a(bank) + call(OPEN_SRAM) + ld_hl(addr) + op + call(CLOSE_SRAM) + RET
+
+
+def module_flag(name, on):
+    bit = UC_MODULES[name]["bit"]
+    if bit is None:
+        raise SystemExit(f"{name} has no module flag, it is always on")
+    bank, addr = uc_label_sram("UCModules")
+    return bit_code(bank, addr, bit, on)
+
+
 def installer(writes):
     """Generates a complete payload: code, then the data to be written."""
     code = installer_code(writes, 0)
@@ -108,6 +123,8 @@ def installers(writes):
         if room > 0:
             current.append((bank, addr, data[:room]))
             queue.insert(0, (bank, addr + room, data[room:]))
+        else:
+            queue.insert(0, (bank, addr, data))
         payloads.append(installer(current))
         current = []
     if current:
@@ -142,6 +159,8 @@ def written_bytes(payloads):
             elif op == 0x0E:
                 count = payload[i + 1]
                 i += 2
+            elif op == 0xCB:
+                i += 2  # set/res bit, [hl]: a read-modify-write, not a copy
             elif op == 0xCD:
                 target = int.from_bytes(payload[i + 1 : i + 3], "little")
                 i += 3
@@ -158,27 +177,44 @@ def written_bytes(payloads):
 
 
 def writes_for(name):
-    """core, runtime (every slot 4 image), or one image by its start label"""
+    """core, runtime (every slot 4 image), a module, or one image by label"""
     if name == "core":
         return uc_core_writes()
     if name == "runtime":
         return uc_runtime_writes()
+    if name in UC_MODULES:
+        return uc_module_writes(name)
     for image in UC_SLOT4_IMAGES:
         if image[0] == name:
             return uc_runtime_writes([image])
-    raise SystemExit(f"unknown target {name}: core, runtime, or one of "
-                     + ", ".join(start for start, _ in UC_SLOT4_IMAGES))
+    raise SystemExit(f"unknown target {name}: core, runtime, a module ("
+                     + ", ".join(UC_MODULES) + "), or an image ("
+                     + ", ".join(start for start, _ in UC_SLOT4_IMAGES) + ")")
+
+
+def payloads_for(argv):
+    """The codes for a target. A module's install ends with its enable code;
+    enable/disable <module> is that code alone."""
+    target = argv[1]
+    if target in ("enable", "disable"):
+        return [module_flag(argv[2], target == "enable")]
+    payloads = installers(writes_for(target))
+    if target in UC_MODULES and UC_MODULES[target]["bit"] is not None:
+        payloads.append(module_flag(target, True))
+    return payloads
 
 
 def main(argv):
     if len(argv) < 2:
-        print(f"usage: {argv[0]} core|runtime|<image> [prefix]", file=sys.stderr)
+        print(f"usage: {argv[0]} core|runtime|<module>|<image>|enable <module>|disable <module> [prefix]",
+              file=sys.stderr)
         return 2
-    payloads = installers(writes_for(argv[1]))
+    payloads = payloads_for(argv)
     print(format_codes(payloads))
-    if len(argv) > 2:
+    prefix_at = 3 if argv[1] in ("enable", "disable") else 2
+    if len(argv) > prefix_at:
         for n, payload in enumerate(payloads, 1):
-            with open(f"{argv[2]}-{n}.bin", "wb") as f:
+            with open(f"{argv[prefix_at]}-{n}.bin", "wb") as f:
                 f.write(payload)
     return 0
 

@@ -12,6 +12,7 @@ INCLUDE "constants/move_constants.asm"
 INCLUDE "constants/trainer_constants.asm"
 INCLUDE "constants/text_constants.asm"
 INCLUDE "constants/battle_constants.asm"
+INCLUDE "macros/scripts/text.asm"
 
 DEF OpenSRAM                          EQU $2FCB
 DEF CloseSRAM                          EQU $2FE1
@@ -34,6 +35,7 @@ UCTrainerHouse::
 
 .loaded: db 0 ; Indicates if we already loaded the trainer this run
 .armed: db 0 ; Will be set to 1 when battling David
+.pending: db 0 ; Indicates that success message is pending
 
 .frame
     ld hl, wBattleMode ; Address of battle mode
@@ -63,12 +65,29 @@ UCTrainerHouse::
     call UCPeekB1 ; Get battle result
     and ~BATTLERESULT_BITMASK ; Check against WIN result
     ret nz ; If not WIN, return
+
     ld hl, wEventDecoBed4
     call UCPeekB1 ; Get event deco bed
     set 7, a ; Set bit 7 (Pikachu Bed)
-    jp UCPokeB1 ; Store value in B1
+    call UCPokeB1 ; Store value in B1
+    ld a, 1
+    ld [.pending], a ; Set the success message pending flag
+    ret
 
 .step
+    ; Display a success message if pending
+    ld a, [.pending]
+    and a
+    jr z, .install ; If no message pending, skip
+    ld hl, .bedtext ; Load bed text message
+    call UCShowMessage
+    ret nz ; Keep pending if another script is currently queued
+    xor a ; Clear the accumulator
+    ld [.pending], a
+    ret
+
+.install
+    ; Install the trainer house default trainer if not already loaded
     ld a, [.loaded]
     and a ;If non-zero
     ret nz
@@ -101,6 +120,11 @@ UCTrainerHouse::
     db 80, LANTURN,    THUNDERBOLT,  SURF,        THUNDER_WAVE, CONFUSE_RAY
     db -1                                                         ; end of party
 .dataend
+
+.bedtext
+    text "You have won a"
+    line "Pikachu Bed!"
+    done
 
 UCTrainerHouseEnd::
 
