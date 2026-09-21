@@ -47,7 +47,7 @@ install-uc-runtime` installs everything and sets every implemented module's bit.
 ## Conventions for new units
 
 - A shared framework is tagged 0 and lives in Base or as its own dependency unit.
-- A module's data is a separate image with **no header**: just the entries and the framework's
+- A module's data is a separate image with **no header**: just the maps and entries and the framework's
   terminator. Add it to the framework's `.tables` list with the module's bit.
 - A module's code features are normal feature images; add them to the walker tables with the bit.
 - Every unit has a fixed address recorded in `docs/sram-map.md`; uninstalled units leave holes.

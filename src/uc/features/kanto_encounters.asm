@@ -1,9 +1,10 @@
 ; Kanto Improvements module: its encounter table. Read by
-; features/encounters.asm, which owns the format: map_id, then method bits,
-; species, chance out of 256. The Viridian Forest zone is a map of its own.
-; The forest chances add up to 256, so every encounter there comes from this
-; table. Levels are Route 2's, 3 to 7.
-; TODO: placeholder species, the Red/Blue forest
+; features/encounters.asm, which owns the format: map_id once, then its
+; entries (method bits, species, chance out of 256) ended by a 0, then the
+; next map. The Viridian Forest zone is a map of its own; its chances add up
+; to 256, so every encounter in the maze comes from here. The Route 2 block
+; covers the grass outside the maze, 192/256, the rest stays vanilla.
+; Levels are Route 2's, 3 to 7.
 
 INCLUDE "macros/const.asm"
 INCLUDE "macros/scripts/maps.asm"
@@ -17,19 +18,27 @@ LOAD "uc kanto encounters wram", WRAMX[$D6E0], BANK[4]
 
 UCKantoEncounters::
     db ZONE_GROUP, ZONE_VIRIDIAN_FOREST
-    db UC_CAVE, CATERPIE, 77 ; 30%
-    db ZONE_GROUP, ZONE_VIRIDIAN_FOREST
-    db UC_CAVE, WEEDLE, 77 ; 30%
-    db ZONE_GROUP, ZONE_VIRIDIAN_FOREST
-    db UC_CAVE, METAPOD, 51 ; 20%
-    db ZONE_GROUP, ZONE_VIRIDIAN_FOREST
+    db UC_CAVE, CATERPIE, 64 ; 25%
+    db UC_CAVE, WEEDLE, 64 ; 25%
+    db UC_CAVE, METAPOD, 26 ; 10%
     db UC_CAVE, KAKUNA, 26 ; 10%
-    db ZONE_GROUP, ZONE_VIRIDIAN_FOREST
-    db UC_CAVE, PIKACHU, 13 ; 5%
-    db ZONE_GROUP, ZONE_VIRIDIAN_FOREST
-    db UC_CAVE, PIDGEY, 10 ; 4%
-    db ZONE_GROUP, ZONE_VIRIDIAN_FOREST
-    db UC_CAVE, PIDGEOTTO, 2 ; 1%
+    db UC_CAVE, PIDGEY, 64 ; 25%
+    db UC_CAVE, LEDYBA, 4 ; 1.5%
+    db UC_CAVE, SPINARAK, 4 ; 1.5%
+    db UC_CAVE, LEDIAN, 2 ; 0.75%
+    db UC_CAVE, ARIADOS, 2 ; 0.75%
+    db 0
+
+    map_id ROUTE_2
+    db UC_GRASS, PIDGEY, 64 ; 25%
+    db UC_GRASS, RATTATA, 64; 25%
+    db UC_GRASS, NIDORAN_M, 48 ; 18.75%
+    db UC_GRASS, NIDORAN_F, 48 ; 18.75%
+    db UC_GRASS, PIKACHU, 16 ; 6.25%
+    db UC_GRASS, HOOTHOOT, 16 ; 4.5%
+    db UC_GRASS, NOCTOWL, 4 ; 1.5%
+    db 0
+
     db 0 ; End of table
 
 UCKantoEncountersEnd::

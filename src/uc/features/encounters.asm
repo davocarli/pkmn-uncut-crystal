@@ -7,6 +7,8 @@
 ; surf, one of the rods, headbutt -- then roll their own chance out of 256.
 ; Entries are checked in order and share one roll, so several on the same map
 ; take adjacent bands instead of competing for the same numbers.
+; A table is a list of maps: map_id, then 3-byte entries (method, species,
+; chance) ended by a 0 method, then the next map. A 0 group ends the table.
 
 INCLUDE "constants/hardware.inc"
 INCLUDE "macros/const.asm"
@@ -151,38 +153,43 @@ UCEncounters::
     ld h, [hl]
     ld l, a ; hl = the table
 .loop
-    ld a, [hl]
-    and a ; If group is 0
-    jr z, .tabledone ; end of this table
-    push hl ; Save current entry start
-    cp d ; Compare group with map group
-    jr nz, .next ; If not equal, skip to the next entry
-    inc hl
-    ld a, [hl] ; Load map number
+    ld a, [hli] ; Load data at addr hl then increment
+    and a ; If a == 0
+    jr z, .tabledone ; End of the table
+    ld b, a ; Save a for comparison
+    ld a, [hli] ; Load and increment pointer again
     cp e ; Compare with current map number
-    jr nz, .next ; If not equal, skip to the next entry
-    inc hl
-    ld a, [hli] ; METHOD (which encounters this entry covers)
-    and c ; If it doesn't cover how we got here
-    jr z, .next ; skip to the next entry
+    jr nz, .skipmap ; Skip to the next map if map doesn't match
+    ld a, b ; Load current map group
+    cp d ; Compare current map group
+    jr nz, .skipmap ; Skip if map group doesn't match
+.entries
+    ld a, [hli] ; Load the encounter method
+    and a ; If the encounter method is 0, end of entries for this map
+    jr z, .loop ; Continue loop to next map's entries
+    and c ; Is current encounter method included
+    jr z, .skipentry ; Skip if encounter method doesn't match
+    ld a, [hli] ; Load species for this encounter
+    ld b, a ; Store in b
+    ld a, [.roll] ; Get rolled number
+    cp [hl] ; Compare with the roll chance for the encounter
+    jr c, .swap ; Swap the encounter for this species
+    sub [hl] ; Subtract the roll chance from the number
+    ld [.roll], a ; Store the updated roll number
+    inc hl ; Move to the next entry to compare new roll number
+    jr .entries ; Continue loop for next entry
+.skipentry
+    inc hl ; Increment to rol chance
+    inc hl ; Increment to next entry
+    jr .entries ; Go back to loop to check next entry
 
-.rollencounter
-    ld a, [hli] ; TO (species)
-    ld b, a
-    ld a, [.roll] ; Load the random number for this battle
-    cp [hl] ; If the roll < roll chance
-    jr c, .swap ; swap the encounter species
-    sub [hl] ; Subtract the roll chance from the random number
-    ld [.roll], a
-
-.next
-    pop hl ; Restore current entry start
-    ld a, l
-    add 5 ; Move to the next entry (each entry is 5 bytes long)
-    ld l, a
-    jr nc, .loop
-    inc h ;
-    jr .loop
+.skipmap
+    ld a, [hli] ; Load next piece of data
+    and a ; Check if current map entry is 0 (end of list)
+    jr z, .loop ; Jump to loop if end of map entry list
+    inc hl ; Increment
+    inc hl ; Move to the next map entry
+    jr .skipmap ; Loop until we hit 0 (end of map) and run .loop
 
 .tabledone
     pop hl ; Back to the list
@@ -194,8 +201,7 @@ UCEncounters::
     jr .tableloop
 
 .swap
-    pop hl ; Pop to remove from stack
-    pop hl ; and the list, both done with
+    pop hl ; Pop to remove list position from stack
     ld a, b
     ld hl, wTempWildMonSpecies
     call UCPokeB1
