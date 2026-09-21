@@ -3,8 +3,7 @@
 ; entries (method bits, species, chance out of 256) ended by a 0, then the
 ; next map. The Viridian Forest zone is a map of its own; its chances add up
 ; to 256, so every encounter in the maze comes from here. The Route 2 block
-; covers the grass outside the maze, 192/256, the rest stays vanilla.
-; Levels are Route 2's, 3 to 7.
+; does the same for the grass outside the maze.
 
 INCLUDE "macros/const.asm"
 INCLUDE "macros/scripts/maps.asm"
@@ -35,7 +34,7 @@ UCKantoEncounters::
     db UC_GRASS, NIDORAN_M, 48 ; 18.75%
     db UC_GRASS, NIDORAN_F, 48 ; 18.75%
     db UC_GRASS, PIKACHU, 16 ; 6.25%
-    db UC_GRASS, HOOTHOOT, 16 ; 4.5%
+    db UC_GRASS, HOOTHOOT, 12 ; 4.5%
     db UC_GRASS, NOCTOWL, 4 ; 1.5%
     db 0
 

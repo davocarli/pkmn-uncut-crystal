@@ -22,7 +22,7 @@ group) grouped into **modules** the player picks. Two mechanisms, deliberately s
 
 | Module | Bit | Own units | Depends on |
 |---|---|---|---|
-| base | – | core, runtime (slot4), GS Ball, Trainer House; also zeroes `UCZoneCurrent` | – |
+| base | – | core, runtime (slot4), window loader (`UCWindows`), GS Ball, Trainer House; also zeroes `UCZoneCurrent` | – |
 | encounters | – | `UCEncounters` (shared framework) | base |
 | zones | – | `UCZones` (shared framework) | base |
 | exclusives | 0 | `UCExclusivesTable` | encounters |

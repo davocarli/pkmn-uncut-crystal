@@ -88,7 +88,7 @@ UCOptions::
     ret
 
 .stage
-    ld a, [UCWindow2Loaded]
+    ld a, [UCWindow2Loaded] ; gone 2026-09-21: now UCWindows.loaded in features/windows.asm
     and a ; If the second window isn't loaded yet
     ret z ; return, the blob isn't in bank 4
     ld a, [.staged]

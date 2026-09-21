@@ -104,12 +104,16 @@ UC_IMAGE_OFFSET = 0xAC6B
 # slot 4 windows: (bank 4 base, sram bank, sram addr, length)
 UC_SLOT4_WINDOWS = [
     (0xD200, 0, 0xAE6B, 0xB200 - 0xAE6B),  # loaded by the kernel's Init
-    (0xD600, 1, 0xBE57, 0xC000 - 0xBE57),  # loaded by the runtime on the first step
+    (0xD600, 1, 0xBE57, 0xC000 - 0xBE57),  # windows 2-5: loaded by UCWindows (features/windows.asm)
+    (0xD800, 2, 0xBE30, 0xC000 - 0xBE30),  # on the first step; keep in step with its table
+    (0xDA00, 3, 0xBEEC, 0xC000 - 0xBEEC),  # after the 189-byte RAM Writer reservation
+    (0xDB20, 0, 0xBF12, 0xC000 - 0xBF12),
 ]
 # every slot 4 image: (start, end) labels in uc.sym. offset in uc.bin = addr - $D000;
 # a label outside a LOAD block is the offset itself
 UC_SLOT4_IMAGES = [
     ("UCSlot4", "UCSlot4End"),
+    ("UCWindows", "UCWindowsEnd"),
     ("UCGSBall", "UCGSBallEnd"),
     ("UCTrainerHouse", "UCTrainerHouseEnd"),
     ("UCEncounters", "UCEncountersEnd"),
@@ -127,7 +131,7 @@ UC_SLOT4_IMAGES = [
 UC_MODULES = {
     "base": {
         "bit": None,
-        "images": ["UCSlot4", "UCGSBall", "UCTrainerHouse"],
+        "images": ["UCSlot4", "UCWindows", "UCGSBall", "UCTrainerHouse"],
         "zero": ["UCZoneCurrent"],
     },
     "encounters": {"bit": None, "images": ["UCEncounters"]},

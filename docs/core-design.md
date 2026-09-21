@@ -254,7 +254,7 @@ Contract (fixed addresses, README §2a "fixed map"):
 | `core` image (stage 1 + stubs + PokeB1) | `$AC6B–$AE6A` | `$D000–$D1FF` | 512 B (re-cut 2026-09-10: three fixes = 267 B image; stage 1 must stay ≤ 255 B) |
 | slot 4 image | `$AE6B–$B1FF` | `$D200–$D594` | 917 B, the rest of the bank-0 gap |
 
-Slot 4 header at `04:D200`: `db "U4"` signature (`UC_SLOT4_SIG_1/2`), `jp Frame4` at `$D202`, `jp Step4` at `$D205`. `UCInit` always copies the whole slot-4 window from SRAM (917 B ≈ 12k M-cycles, once per power-on); `UCFrame` and `UCStep`, after `core`'s own hooks, check the signature and `call $D202` / `call $D205` if present. An uninstalled slot 4 is whatever the gap held (`$FF` on fresh SRAM, `$00` after delete-save), neither of which matches the signature. The UC Runtime (README §2a Tier 1b) is our slot-4 code; it owns the other four gaps and loads bundles from them itself.
+Slot 4 header at `04:D200`: `db "U4"` signature (`UC_SLOT4_SIG_1/2`), `jp Frame4` at `$D202`, `jp Step4` at `$D205`. `UCInit` always copies the whole slot-4 window from SRAM (917 B ≈ 12k M-cycles, once per power-on); `UCFrame` and `UCStep`, after `core`'s own hooks, check the signature and `call $D202` / `call $D205` if present. An uninstalled slot 4 is whatever the gap held (`$FF` on fresh SRAM, `$00` after delete-save), neither of which matches the signature. The UC Runtime (README §2a Tier 1b) is our slot-4 code; it owns the other four gaps and loads them itself: `UCWindows` (`features/windows.asm`, 2026-09-21) walks a table of windows on the first runtime step.
 
 ## Install contract for `core`
 - Patcher: patch the four framework bytes, write the loader, zero `$DA0E`, write the SRAM image

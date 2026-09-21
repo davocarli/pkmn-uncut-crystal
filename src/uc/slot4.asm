@@ -1,16 +1,7 @@
 INCLUDE "constants/hardware.inc"
 INCLUDE "module_constants.asm"
 
-DEF OpenSRAM           EQU $2FCB
-DEF CloseSRAM          EQU $2FE1
 DEF _hl_               EQU $2FEC
-DEF CopyBytes          EQU $3026
-
-; second sram window, loaded by the runtime on the first step after power-on
-DEF UC_WINDOW2_BANK    EQU 1
-DEF UC_WINDOW2_SRAM    EQU $BE57
-DEF UC_WINDOW2_BASE    EQU $D600
-DEF UC_WINDOW2_LEN     EQU $C000 - UC_WINDOW2_SRAM
 
 ; For message display
 DEF wMapReentryScriptQueueFlag    EQU $D45C ; 1 means a script is queued
@@ -28,7 +19,6 @@ UCSlot4:: ; Start of Slot 4
     jp Frame4 ; Jump to per-frame handler
     jp Step4 ; Jump to per-step handler
 
-UCWindow2Loaded:: db 0 ; 1 once the second window is in bank 4, this power-on
 UCModules:: db 0 ; One bit per enabled module, set by each module's install code
 
 Frame4: ; Contains code to run every frame
@@ -37,7 +27,6 @@ Frame4: ; Contains code to run every frame
     jr RunFeatures ; Runs the features from the loaded table
 
 Step4: ; Contains code to run every step
-    call LoadWindow2
     ld hl, StepFeatures ; Load the address of step features table
     ld bc, 3 ; Set bc to 3 for calculating table offset
     ; falls naturally into RunFeatures
@@ -161,22 +150,6 @@ UCRunScript::
     xor a
     ret
 
-; main thread, sram closed. copies the second window into bank 4 once
-LoadWindow2:
-    ld a, [UCWindow2Loaded]
-    and a
-    ret nz
-    ld a, UC_WINDOW2_BANK
-    call OpenSRAM
-    ld hl, UC_WINDOW2_SRAM
-    ld de, UC_WINDOW2_BASE
-    ld bc, UC_WINDOW2_LEN
-    call CopyBytes
-    call CloseSRAM
-    ld a, 1
-    ld [UCWindow2Loaded], a
-    ret
-
 ; Feature address, then the module it belongs to (0 = always on)
 FrameFeatures:
     dw UCTrainerHouse
@@ -190,6 +163,8 @@ FrameFeatures:
     dw 0 ; End of frame features list
 
 StepFeatures:
+    dw UCWindows ; first, so the other windows are loaded before anything reads them
+    db 0
     dw UCGSBall
     db 0
     dw UCTrainerHouse
