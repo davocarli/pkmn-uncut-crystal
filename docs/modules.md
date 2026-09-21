@@ -27,7 +27,7 @@ group) grouped into **modules** the player picks. Two mechanisms, deliberately s
 | zones | – | `UCZones` (shared framework) | base |
 | exclusives | 0 | `UCExclusivesTable` | encounters |
 | kanto | 1 | `UCKantoZones`, `UCKantoEncounters` | encounters, zones |
-| cut | 2 | (radio, map instances, tables, roamer data — to come) | encounters, zones, map, roam |
+| cut | 2 | `UCRadio`; (map instances, tables, roamer data — to come) | encounters, zones, map, roam |
 | 251 | 3 | (caves, Mew/Mewtwo, starter roamers, tables — to come) | encounters, zones, map, npc, roam |
 | qol | 4 | (to come) | – |
 

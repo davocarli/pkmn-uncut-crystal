@@ -185,6 +185,8 @@ FrameFeatures:
     db 0
     dw UCEncounters
     db 0
+    dw UCRadio
+    db MOD_CUT
     dw 0 ; End of frame features list
 
 StepFeatures:

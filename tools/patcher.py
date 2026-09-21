@@ -117,6 +117,7 @@ UC_SLOT4_IMAGES = [
     ("UCExclusivesTable", "UCExclusivesTableEnd"),
     ("UCKantoZones", "UCKantoZonesEnd"),
     ("UCKantoEncounters", "UCKantoEncountersEnd"),
+    ("UCRadio", "UCRadioEnd"),
     # options menu shelved 2026-09-20 (src/uc/shelved/ucoptions.asm), too big for its value
 ]
 
@@ -124,16 +125,22 @@ UC_SLOT4_IMAGES = [
 # (None = always on), "images" its own images, "deps" the shared units it needs,
 # "zero" bytes its install must clear (read by others when the unit is absent).
 UC_MODULES = {
-    "base":       {"bit": None, "images": ["UCSlot4", "UCGSBall", "UCTrainerHouse"],
-                   "zero": ["UCZoneCurrent"]},
+    "base": {
+        "bit": None,
+        "images": ["UCSlot4", "UCGSBall", "UCTrainerHouse"],
+        "zero": ["UCZoneCurrent"],
+    },
     "encounters": {"bit": None, "images": ["UCEncounters"]},
-    "zones":      {"bit": None, "images": ["UCZones"]},
+    "zones": {"bit": None, "images": ["UCZones"]},
     "exclusives": {"bit": 0, "images": ["UCExclusivesTable"], "deps": ["encounters"]},
-    "kanto":      {"bit": 1, "images": ["UCKantoZones", "UCKantoEncounters"],
-                   "deps": ["encounters", "zones"]},
-    "cut":        {"bit": 2, "images": [], "deps": ["encounters", "zones"]},
-    "251":        {"bit": 3, "images": [], "deps": ["encounters", "zones"]},
-    "qol":        {"bit": 4, "images": [], "deps": []},
+    "kanto": {
+        "bit": 1,
+        "images": ["UCKantoZones", "UCKantoEncounters"],
+        "deps": ["encounters", "zones"],
+    },
+    "cut": {"bit": 2, "images": ["UCRadio"], "deps": ["encounters", "zones"]},
+    "251": {"bit": 3, "images": [], "deps": ["encounters", "zones"]},
+    "qol": {"bit": 4, "images": [], "deps": []},
 }
 
 
