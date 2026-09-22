@@ -8,15 +8,15 @@ DEF CloseSRAM       EQU $2FE1
 DEF CopyBytes       EQU $3026 ; hl = source, de = destination, bc = length
 DEF UC_WINDOWS_END  EQU $FF ; ends the window table, bank 0 is a real entry
 
-SECTION "uc windows", ROM0[$0540]
-LOAD "uc windows wram", WRAMX[$D540], BANK[4] ; window 1's free space
+SECTION "uc windows", ROM0[$0520]
+LOAD "uc windows wram", WRAMX[$D520], BANK[4] ; window 1, after the encounters
 
 UCWindows::
     db "UC"
     jp .frame
     jp .step
 
-.loaded: db 0 ; 1 once the windows are in bank 4, this power-on
+.loaded: db 0 ; non-zero once the windows are in bank 4, this power-on
 
 .frame
     ret
@@ -48,22 +48,31 @@ UCWindows::
     inc hl ; past the source, on to the next window
     jr .loop
 .done
-    call CloseSRAM
-    ld a, 1
-    ld [.loaded], a
-    ret
+    ld [.loaded], a ; a is still the end byte, non-zero
+    jp CloseSRAM
 
-; sram bank, wram destination, length, sram source
+; sram bank, wram destination, length, sram source. in bank 4 order
 ; keep in step with UC_SLOT4_WINDOWS in tools/patcher.py
+; every row costs 7 bytes here and in the mail code: drop the ones still empty at release
 .windows
+    db 0
+    dw $D108, $C000 - $BF12, $BF12 ; window 5, bank 0 tail, after the kernel
     db 1
     dw $D600, $C000 - $BE57, $BE57 ; window 2, bank 1 tail
     db 2
     dw $D800, $C000 - $BE30, $BE30 ; window 3, bank 2 tail
+    db 0
+    dw $D9D0, $AC60 - $AC30, $AC30 ; window 6, mystery gift padding
     db 3
     dw $DA00, $C000 - $BEEC, $BEEC ; window 4, bank 3 tail after the ram writer reservation
+    db 1
+    dw $DB14, $AD0D - $AB83, $AB83 ; window 7, save block padding
     db 0
-    dw $DB20, $C000 - $BF12, $BF12 ; window 5, bank 0 tail
+    dw $DCA2, $BF0D - $BD83, $BD83 ; window 8, backup save block padding
+    db 1
+    dw $DE30, $B260 - $B160, $B160 ; window 9, active box padding
+    db 0
+    dw $DF30, $AE6B - $ADA4, $ADA4 ; window 10, slack after the core image
     db UC_WINDOWS_END
 
 UCWindowsEnd::

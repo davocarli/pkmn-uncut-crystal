@@ -9,8 +9,8 @@ INCLUDE "constants/map_constants.asm"
 INCLUDE "constants/pokemon_constants.asm"
 INCLUDE "encounter_constants.asm"
 
-SECTION "uc exclusives table", ROM0[$0520]
-LOAD "uc exclusives table wram", WRAMX[$D520], BANK[4]
+SECTION "uc exclusives table", ROM0[$09D0]
+LOAD "uc exclusives table wram", WRAMX[$D9D0], BANK[4] ; window 6
 
 UCExclusivesTable::
     map_id ROUTE_42

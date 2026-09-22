@@ -9,11 +9,16 @@ Banks 4–7 are declared in `ram/sram.asm` (Japanese mobile layout) but do not e
 |---|---|---|---|
 | 0 | `$A000–$A5FF` | Scratch | `sScratch`; game-written (identical content across saves) |
 | 0 | `$A600–$AC6A` | SRAM Bank 0 | party mail, Mystery Gift data (`sMysteryGiftItem` `$ABE2` …), lucky number, RTC status |
+| 0 | **`$AC30–$AC5F`** | **padding** (`ds $30` after `sMysteryGiftTrainer`) | **48 B**, unlabeled → **window 6** (2026-09-21) |
+| 0 | **`$AC61–$AC67`** | **padding** (`ds 7` after `sRTCStatusFlags`) | **7 B**, unlabeled; too small for a window |
 | 0 | **`$AC6B–$B1FF`** | **EMPTY** | **1429 B** |
 | 0 | `$B200–$BF11` | Backup Save | checksummed `$B209–$BD82`, `sBackupChecksum` `$BF0D` |
+| 0 | **`$BD83–$BF0C`** | **padding** (`ds $18a` before `sBackupChecksum`) | **394 B**, unlabeled → **window 8** (2026-09-21) |
 | 0 | **`$BF12–$BFFF`** | **EMPTY** | **238 B** |
 | 1 | `$A000–$AD0F` | Save | checksummed `$A009–$AB82`, `sChecksum` `$AD0D` |
-| 1 | `$AD10–$B25F` | Active Box | `sBox` |
+| 1 | **`$AB83–$AD0C`** | **padding** (`ds $18a` before `sChecksum`) | **394 B**, unlabeled → **window 7** (2026-09-21) |
+| 1 | `$AD10–$B15F` | Active Box | `sBox`, `BOX_LENGTH` `$450` |
+| 1 | **`$B160–$B25F`** | **padding** (`ds $100` after `sBox`) | **256 B**, unlabeled → **window 9** (2026-09-21) |
 | 1 | `$B260–$B2BF` | Link Battle Data | |
 | 1 | `$B2C0–$BE3B` | SRAM Hall of Fame | 30 entries |
 | 1 | `$BE3C–$BE44` | SRAM Crystal Data | `sGSBallFlag` `$BE3C`, `sGSBallFlagBackup` `$BE44` |
@@ -26,6 +31,8 @@ Banks 4–7 are declared in `ram/sram.asm` (Japanese mobile layout) but do not e
 
 **Total unallocated in banks 0–3: 3020 bytes** (the handoff estimated ~1 KB). None of it is covered by either checksum.
 
+**Plus 1099 bytes of unlabeled `ds` padding inside allocated sections (found 2026-09-21, the space audit):** the linker counts these as allocated, but no label names them, so no code can address them; every neighbouring write is label-bounded (both checksums run `sGameData..sGameDataEnd`; `sChecksum`, `sCheckValue2` and `sStackTop` are 1–2 byte stores; every box copy uses `sBoxEnd`-derived sizes; the Mystery Gift copy is `sBackupMysteryGiftItemEnd - sBackupMysteryGiftItem`). Uniform fill in all six saves below (two cartridge dumps and `build/vccomplete-runtime.sav` added). Evidence level: grep of every reference near the ranges + the empirical check, not the 2026-09-04 script inventory — the ranges are in `GAPS` now, so `sram_map.py` and `sentinel` cover them; re-audit to that standard before release. Same residual risk as the gaps (a write through a corrupted pointer). **4119 B in all.**
+
 ## Empirical check (`tools/sram_map.py`)
 
 | Bank | Range | Size | .sav offsets | fresh mGBA | VC early | VC complete | Identical |
@@ -35,6 +42,10 @@ Banks 4–7 are declared in `ram/sram.asm` (Japanese mobile layout) but do not e
 | 1 | `$BE57-$BFFF` | 425 | `0x3e57-0x3fff` | all `0xff` | all `0x00` | all `0xff` | NO |
 | 2 | `$BE30-$BFFF` | 464 | `0x5e30-0x5fff` | all `0xff` | mixed(10) | all `0xff` | NO |
 | 3 | `$BE30-$BFFF` | 464 | `0x7e30-0x7fff` | all `0xff` | mixed(3) | all `0xff` | NO |
+| 0 | `$AC30-$AC5F` | 48 | `0x0c30-0x0c5f` | all `0xff` | all `0x00` | all `0xff` | NO (fill) |
+| 0 | `$BD83-$BF0C` | 394 | `0x1d83-0x1f0c` | all `0xff` | all `0x00` | all `0xff` | NO (fill) |
+| 1 | `$AB83-$AD0C` | 394 | `0x2b83-0x2d0c` | all `0xff` | all `0x00` | all `0xff` | NO (fill) |
+| 1 | `$B160-$B25F` | 256 | `0x3160-0x325f` | all `0xff` | all `0x00` | all `0xff` | NO (fill) |
 
 Reading:
 - **Fresh mGBA** (minutes) and **VC complete** (16 badges, 13 Hall of Fame entries, heavy box use): every gap still holds the uninitialised fill (`0xFF`). No byte of any gap was written in either session. This is the strong result.
@@ -48,8 +59,8 @@ Method: every SRAM write in the retail build happens between `OpenSRAM` and `Clo
 | Gap | Neighbour and how it is written | Verdict |
 |---|---|---|
 | `00:AC6B–B1FF` (1429) | "SRAM Bank 0" ends with `sMysteryGiftTrainer` (38 B copy, `wMysteryGiftTrainerEnd - wMysteryGiftTrainer`), unlabeled padding `$AC30–$AC5F`, `sRTCStatusFlags` (1 B), `sLuckyNumberDay` (1 B), `sLuckyIDNumber` (2 B). Mail backups (`sPartyMailBackup` `$A71A`, `sMailboxCountBackup` `$AA0B`) end at `$ABE2`. All fixed-size. | **free** |
-| `00:BF12–BFFF` (238) → **window 5**, loaded to `04:DB20` by `UCWindows`; empty as of 2026-09-21 | "Backup Save" ends with `sBackupChecksum` (2 B), `sBackupCheckValue2` (1 B), `sStackTop` (2 B, `$BF10–11`, "appears to be unused"). | **free** |
-| `01:BE57–BFFF` (425) → **slot 4 window 2**, loaded to `04:D600` by `UCWindows` (`features/windows.asm`) on the first runtime step; zones framework `$D600` (200 B), Kanto zone table `$D6D0` (9 B), Kanto encounter table `$D6E0` (55 B), Radio `$D720` (137 B, ends exactly at the window end) as of 2026-09-21; 416 of 425 used (`$D717–$D71F` free, 9 B). Loaded on the second step after power-on (the first runs Init) | "SRAM Battle Tower": `sBTTrainers` filled with `BATTLETOWER_STREAK_LENGTH` (7) bytes, the rest single-byte stores; last byte `sBTMonPrevPrevTrainer3` `$BE56`. Hall of Fame is a fixed 30-entry FIFO: `AddHallOfFameEntry` shifts entries 0–28 down and writes entry 0; it never grows past `sHallOfFameEnd` `$BE3C`. | **free** |
+| `00:BF12–BFFF` (238) → **window 5**, loaded to `04:D108` (after the kernel; was `04:DB20` until 2026-09-21) by `UCWindows`; empty | "Backup Save" ends with `sBackupChecksum` (2 B), `sBackupCheckValue2` (1 B), `sStackTop` (2 B, `$BF10–11`, "appears to be unused"). | **free** |
+| `01:BE57–BFFF` (425) → **slot 4 window 2**, loaded to `04:D600` by `UCWindows` (`features/windows.asm`) on the first runtime step; zones framework `$D600` (200 B), Kanto zone table `$D6D0` (9 B), Kanto encounter table `$D6E0` (55 B), Radio `$D720` (137 B, ends exactly at the window end) as of 2026-09-21; 416 of 425 used (`$D717–$D71F` free, 9 B). Loaded on the second step after power-on (the first runs Init). **Same loader, since 2026-09-21:** window 6 `00:AC30` (48) → `$D9D0`, window 7 `01:AB83` (394) → `$DB14`, window 8 `00:BD83` (394) → `$DCA2`, window 9 `01:B160` (256) → `$DE30`, window 10 `00:ADA4` (199, the slack after the core image) → `$DF30`; bank 4 is packed tight from `$DB14` to `$DFF6` | "SRAM Battle Tower": `sBTTrainers` filled with `BATTLETOWER_STREAK_LENGTH` (7) bytes, the rest single-byte stores; last byte `sBTMonPrevPrevTrainer3` `$BE56`. Hall of Fame is a fixed 30-entry FIFO: `AddHallOfFameEntry` shifts entries 0–28 down and writes entry 0; it never grows past `sHallOfFameEnd` `$BE3C`. | **free** |
 | `02:BE30–BFFF` (464) → **window 3**, loaded to `04:D800` by `UCWindows`; roaming framework + Kanto roamers as of 2026-09-21 (54 B free) | Box 7 occupies `sBox7` `$B9E0` + `BOX_LENGTH` `$450` = up to `$BE2F`; every box copy uses `sBoxEnd - sBox`-derived sizes (`$44E`), so `$BE2E–$BE2F` are never written either. `CopyBoxmonToTempMon` and the printer's box listing are reads. | **free** (+2 B padding at `$BE2E–2F`) |
 | `03:BE30–BFFF` (464) → **window 4** = `$BEEC–$BFFF` (276 B, after the RAM Writer reservation), loaded to `04:DA00` by `UCWindows`; starter roamer as of 2026-09-21 (169 B free) | Same as bank 2 for box 14. TimoVM's RAM Writer, when installed, uses `$BE2F–$BEEB` (reserved). | **free** (+2 B padding) |
 
@@ -69,7 +80,9 @@ Residual risk: a game-code write through a corrupted pointer (a glitch, not norm
 |---|---|---|
 | `03:BE2F–BEEB` | 189 | reserved: TimoVM RAM Writer (optional) |
 | `00:AC6B–AE6A` | 512 | `core` image (stage 1 + WRAM0 stubs + PokeB1), loaded to `04:D000` by the loader/Init |
-| `00:AE6B–B1FF` | 917 | slot 4 image (UC Runtime), loaded to `04:D200` by `core`'s Init; runtime `$D200` (168 B), GS Ball `$D300` (45 B), Trainer House `$D340` (212 B), Encounters `$D420` (253 B, 3 B slack before the next image), Version Exclusives table `$D520` (28 B), window loader `UCWindows` `$D540` (83 B) as of 2026-09-21; 911 of 917 used (`$D593–$D594` free, 2 B; 3 B slack before `$D420`). Runtime is now 205 B (module byte `UCModules` at `$D208`, walker gate, radio, windows and the three roaming entries; `LoadWindow2` moved out to `UCWindows`). Options menu (268 B at `$D480` + 420 B blob in window 2) shelved 2026-09-20: `src/uc/shelved/ucoptions.asm` |
-| `02:BE30–BFFF`, `03:BEEC–BFFF`, `00:BF12–BFFF` | 464 + 276 + 238 | windows 3, 4, 5 → `04:D800`, `04:DA00`, `04:DB20`, loaded by `UCWindows` (2026-09-21). Window 3: roaming framework `UCRoam` `$D800` (227 B, of which the two 21 B region sets live in SRAM at `02:BE98–BEC1` and are written in place; the bank-4 copy is stale), Kanto roamers `UCKantoRoamers` `$D8E4` (182 B); 410 of 464 used, 54 B free at `$D99A`. Window 4: starter roamer `UCStarterRoamer` `$DA00` (107 B), 169 B free at `$DA6B`. Window 5 empty. Skipped units leave holes by design. |
+| `00:AE6B–B1FF` | 917 | slot 4 image (UC Runtime), loaded to `04:D200` by `core`'s Init; runtime `$D200` (205 B), GS Ball `$D300` (45 B), Trainer House `$D340` (212 B), Encounters `$D420` (253 B), window loader `UCWindows` `$D520` (115 B, 9 rows; was 83 B at `$D540`) as of 2026-09-21; 830 of 917 used, free in crumbs only (`$D2CD` 51, `$D32D` 19, `$D414` 12, `$D51D` 3, `$D593` 2). The Version Exclusives table moved to window 6 (`$D9D0`) to make room for the loader table. Options menu (268 B at `$D480` + 420 B blob in window 2) shelved 2026-09-20: `src/uc/shelved/ucoptions.asm` |
+| `02:BE30–BFFF`, `03:BEEC–BFFF`, `00:BF12–BFFF` | 464 + 276 + 238 | windows 3, 4, 5 → `04:D800`, `04:DA00`, `04:D108`, loaded by `UCWindows` (2026-09-21). Window 3: roaming framework `UCRoam` `$D800` (227 B, of which the two 21 B region sets live in SRAM at `02:BE98–BEC1` and are written in place; the bank-4 copy is stale), Kanto roamers `UCKantoRoamers` `$D8E4` (182 B); 410 of 464 used, 54 B free at `$D99A`. Window 4: starter roamer `UCStarterRoamer` `$DA00` (107 B), 169 B free at `$DA6B`. Window 5 empty. Skipped units leave holes by design. |
+| `00:AC30–AC5F` | 48 | window 6 → `04:D9D0` (2026-09-21): Version Exclusives table `UCExclusivesTable` `$D9D0` (28 B), 20 B free |
+| `01:AB83–AD0C`, `00:BD83–BF0C`, `01:B160–B25F`, `00:ADA4–AE6A` | 394 + 394 + 256 + 199 | windows 7, 8, 9, 10 → `04:DB14`, `04:DCA2`, `04:DE30`, `04:DF30` (2026-09-21), all empty. Window 10 is the slack after the 313 B core image; the patcher refuses a core image that reaches it. **Every registered window costs 7 B in the loader table and 7 B of mail code: remove the ones still empty when the feature work is done and the documentation is being finished.** |
 
 **Save-side byte (2026-09-21):** the roaming framework uses `01:DCAF`, the first byte of the `ds 3` padding after `wBackupMapNumber` inside `wCurMapData`, as "which region's set the roamer slots hold". It is copied with the save (both checksummed blocks) and nothing in the game writes it. `wUnusedDailyFlag` was rejected: `time.asm` writes it.

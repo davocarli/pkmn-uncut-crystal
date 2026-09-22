@@ -33,6 +33,12 @@ GAPS = [
     (1, 0xBE57, 0xBFFF),
     (2, 0xBE30, 0xBFFF),
     (3, 0xBE30, 0xBFFF),
+    # unlabeled ds paddings inside allocated sections (2026-09-21), never written
+    (0, 0xAC30, 0xAC5F),  # after sMysteryGiftTrainer
+    (0, 0xAC61, 0xAC67),  # after sRTCStatusFlags, too small for a window
+    (0, 0xBD83, 0xBF0C),  # before sBackupChecksum
+    (1, 0xAB83, 0xAD0C),  # before sChecksum
+    (1, 0xB160, 0xB25F),  # after sBox
 ]
 
 
@@ -101,13 +107,19 @@ W_UC_LOADER = 0xDA47
 W_UC_PARKED_CALL = 0xDA0E
 UC_IMAGE_BANK = 0
 UC_IMAGE_OFFSET = 0xAC6B
-# slot 4 windows: (bank 4 base, sram bank, sram addr, length)
+UC_IMAGE_END = 0xADA4  # window 10 starts here; the core image must stop short of it
+# slot 4 windows: (bank 4 base, sram bank, sram addr, length), in bank 4 order
 UC_SLOT4_WINDOWS = [
-    (0xD200, 0, 0xAE6B, 0xB200 - 0xAE6B),  # loaded by the kernel's Init
-    (0xD600, 1, 0xBE57, 0xC000 - 0xBE57),  # windows 2-5: loaded by UCWindows (features/windows.asm)
-    (0xD800, 2, 0xBE30, 0xC000 - 0xBE30),  # on the first step; keep in step with its table
-    (0xDA00, 3, 0xBEEC, 0xC000 - 0xBEEC),  # after the 189-byte RAM Writer reservation
-    (0xDB20, 0, 0xBF12, 0xC000 - 0xBF12),
+    (0xD108, 0, 0xBF12, 0xC000 - 0xBF12),  # window 5: loaded by UCWindows (features/windows.asm)
+    (0xD200, 0, 0xAE6B, 0xB200 - 0xAE6B),  # window 1: loaded by the kernel's Init
+    (0xD600, 1, 0xBE57, 0xC000 - 0xBE57),  # window 2, UCWindows from here on; keep in step with its table
+    (0xD800, 2, 0xBE30, 0xC000 - 0xBE30),  # window 3
+    (0xD9D0, 0, 0xAC30, 0xAC60 - 0xAC30),  # window 6: padding after sMysteryGiftTrainer
+    (0xDA00, 3, 0xBEEC, 0xC000 - 0xBEEC),  # window 4: after the 189-byte RAM Writer reservation
+    (0xDB14, 1, 0xAB83, 0xAD0D - 0xAB83),  # window 7: padding before sChecksum
+    (0xDCA2, 0, 0xBD83, 0xBF0D - 0xBD83),  # window 8: padding before sBackupChecksum
+    (0xDE30, 1, 0xB160, 0xB260 - 0xB160),  # window 9: padding after sBox
+    (0xDF30, 0, 0xADA4, UC_IMAGE_OFFSET + 0x200 - 0xADA4),  # window 10: slack after the core image
 ]
 # every slot 4 image: (start, end) labels in uc.sym. offset in uc.bin = addr - $D000;
 # a label outside a LOAD block is the offset itself
@@ -188,7 +200,10 @@ def build_uc_image():
     kernel = bindata[UC_KERNEL_OFFSET : UC_KERNEL_OFFSET + kernel_len]
     stubs = bindata[0:stubs_len]
     pokeb1 = bindata[stubs_len : stubs_len + pokeb1_len]
-    return kernel[:stage1_len] + stubs + pokeb1 + kernel[stage1_len:]
+    image = kernel[:stage1_len] + stubs + pokeb1 + kernel[stage1_len:]
+    if UC_IMAGE_OFFSET + len(image) > UC_IMAGE_END:
+        raise ValueError("core image runs into window 10, move the window")
+    return image
 
 
 def check_dma_hijack(sav: bytearray):
