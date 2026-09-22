@@ -28,7 +28,7 @@ group) grouped into **modules** the player picks. Two mechanisms, deliberately s
 | roam | – | `UCRoam` (shared framework; also owns the save byte `01:DCAF`) | base |
 | exclusives | 0 | `UCExclusivesTable` | encounters |
 | kanto | 1 | `UCKantoZones`, `UCKantoEncounters` | encounters, zones |
-| cut | 2 | `UCRadio`, `UCKantoRoamers`; (map instances, tables — to come) | encounters, zones, roam, map |
+| cut | 2 | `UCRadio`, `UCKantoRoamers`, `UCSafari` + `UCCutEncounters` (Safari Zone, 2026-09-22); (map instances, tables — to come) | encounters, zones, roam, map |
 | 251 | 3 | `UCStarterRoamer`; (caves, Mew/Mewtwo, tables — to come) | encounters, zones, roam, map, npc |
 | qol | 4 | (to come) | – |
 

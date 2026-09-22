@@ -220,6 +220,8 @@ UCEncounters::
     dw UCExclusivesTable
     db MOD_KANTO
     dw UCKantoEncounters
+    db MOD_CUT
+    dw UCCutEncounters
     db TABLE_END
 
 UCEncountersEnd::

@@ -137,6 +137,8 @@ UC_SLOT4_IMAGES = [
     ("UCRoam", "UCRoamEnd"),
     ("UCKantoRoamers", "UCKantoRoamersEnd"),
     ("UCStarterRoamer", "UCStarterRoamerEnd"),
+    ("UCCutEncounters", "UCCutEncountersEnd"),
+    ("UCSafari", "UCSafariEnd"),
     # options menu shelved 2026-09-20 (src/uc/shelved/ucoptions.asm), too big for its value
 ]
 
@@ -158,7 +160,11 @@ UC_MODULES = {
         "images": ["UCKantoZones", "UCKantoEncounters"],
         "deps": ["encounters", "zones"],
     },
-    "cut": {"bit": 2, "images": ["UCRadio", "UCKantoRoamers"], "deps": ["encounters", "zones", "roam"]},
+    "cut": {
+        "bit": 2,
+        "images": ["UCRadio", "UCKantoRoamers", "UCCutEncounters", "UCSafari"],
+        "deps": ["encounters", "zones", "roam"],
+    },
     "251": {"bit": 3, "images": ["UCStarterRoamer"], "deps": ["encounters", "zones", "roam"]},
     "qol": {"bit": 4, "images": [], "deps": []},
 }

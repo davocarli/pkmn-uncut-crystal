@@ -160,6 +160,8 @@ FrameFeatures:
     db 0
     dw UCRadio
     db MOD_CUT
+    dw UCSafari ; the gate's door
+    db MOD_CUT
     dw 0 ; End of frame features list
 
 StepFeatures:
@@ -175,6 +177,8 @@ StepFeatures:
     db 0
     dw UCTrainerHouse
     db 0
+    dw UCSafari ; the zone's encounters
+    db MOD_CUT
     dw 0 ; End of step features list
 
 UCSlot4End::
