@@ -25,10 +25,11 @@ group) grouped into **modules** the player picks. Two mechanisms, deliberately s
 | base | – | core, runtime (slot4), window loader (`UCWindows`), GS Ball, Trainer House; also zeroes `UCZoneCurrent` | – |
 | encounters | – | `UCEncounters` (shared framework) | base |
 | zones | – | `UCZones` (shared framework) | base |
+| roam | – | `UCRoam` (shared framework; also owns the save byte `01:DCAF`) | base |
 | exclusives | 0 | `UCExclusivesTable` | encounters |
 | kanto | 1 | `UCKantoZones`, `UCKantoEncounters` | encounters, zones |
-| cut | 2 | `UCRadio`; (map instances, tables, roamer data — to come) | encounters, zones, map, roam |
-| 251 | 3 | (caves, Mew/Mewtwo, starter roamers, tables — to come) | encounters, zones, map, npc, roam |
+| cut | 2 | `UCRadio`, `UCKantoRoamers`; (map instances, tables — to come) | encounters, zones, roam, map |
+| 251 | 3 | `UCStarterRoamer`; (caves, Mew/Mewtwo, tables — to come) | encounters, zones, roam, map, npc |
 | qol | 4 | (to come) | – |
 
 Definitions live in `tools/patcher.py` `UC_MODULES` and `src/uc/module_constants.asm`; keep them in step.
@@ -37,7 +38,7 @@ Definitions live in `tools/patcher.py` `UC_MODULES` and `src/uc/module_constants
 
 1. TimoVM's Mail Writer bootstrap (his guide).
 2. `core`, then `base`.
-3. The union of the dependencies of the modules you want, e.g. `encounters` and `zones`.
+3. The union of the dependencies of the modules you want, e.g. `encounters`, `zones` and `roam`.
 4. Each module: its unit codes, the last of which is the enable code.
 5. Later: `enable <module>` / `disable <module>`, 1 mail each.
 

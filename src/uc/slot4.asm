@@ -165,6 +165,12 @@ FrameFeatures:
 StepFeatures:
     dw UCWindows ; first, so the other windows are loaded before anything reads them
     db 0
+    dw UCRoam ; before its units, they read what it works out this step
+    db 0
+    dw UCKantoRoamers
+    db MOD_CUT
+    dw UCStarterRoamer
+    db MOD_251
     dw UCGSBall
     db 0
     dw UCTrainerHouse
