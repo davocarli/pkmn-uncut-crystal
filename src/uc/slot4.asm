@@ -146,7 +146,7 @@ UCRunScript::
     ret
 
 ; Feature address, then the module it belongs to (0 = always on).
-; A feature with both hooks has a second signature for its step half
+; A feature with both hooks has a second signature for its other half (UCTrainerHouseStep)
 FrameFeatures:
     dw UCTrainerHouse
     db 0
@@ -156,8 +156,8 @@ FrameFeatures:
     db 0
     dw UCRadio
     db MOD_CUT
-    dw UCSafari ; the gate's door
-    db MOD_CUT
+    dw UCBlocks ; map block overrides, tables per module
+    db 0
     dw 0 ; End of frame features list
 
 StepFeatures:
@@ -173,7 +173,7 @@ StepFeatures:
     db 0
     dw UCTrainerHouseStep
     db 0
-    dw UCSafariStep ; the zone's encounters
+    dw UCSafari ; the zone's encounters
     db MOD_CUT
     dw 0 ; End of step features list
 

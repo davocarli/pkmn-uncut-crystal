@@ -5,7 +5,7 @@ group) grouped into **modules** the player picks. Two mechanisms, deliberately s
 
 - **Signatures say what is installed.** Every feature image starts with `"UC"` and its code follows
   directly (since 2026-09-22; no `jp` header). A feature with both hooks carries a second `"UC"` in
-  front of its step code (`UCTrainerHouseStep`, `UCSafariStep`) and the step table lists that
+  front of its step code (`UCTrainerHouseStep`) and the step table lists that
   address; shared state is named in full across the two label scopes. The runtime's walker skips a
   feature whose signature is missing. Frameworks never check that a dependency is present: the guide
   says to install dependencies first, and skipping that is user error.
@@ -20,6 +20,7 @@ group) grouped into **modules** the player picks. Two mechanisms, deliberately s
 | `RunFeatures` in slot4.asm | each feature table entry is `dw address, db module` | 13 B + 1 B/feature |
 | `encounters.asm` `.tables` | list of `db module, dw table`, ended by `TABLE_END`; each table is a module's own image | ~26 B |
 | `zones.asm` `.tables` | same | ~26 B |
+| `blocks.asm` `.tables` | same | ~26 B |
 
 ## Modules
 
@@ -29,9 +30,10 @@ group) grouped into **modules** the player picks. Two mechanisms, deliberately s
 | encounters | – | `UCEncounters` (shared framework) | base |
 | zones | – | `UCZones` (shared framework) | base |
 | roam | – | `UCRoam` (shared framework; also owns the save byte `01:DCAF`) | base |
+| blocks | – | `UCBlocks` (shared framework, 2026-09-22: writes a module's block ids into the loaded map) | base |
 | exclusives | 0 | `UCExclusivesTable` | encounters |
 | kanto | 1 | `UCKantoZones`, `UCKantoEncounters` | encounters, zones |
-| cut | 2 | `UCRadio`, `UCKantoRoamers`, `UCSafari` + `UCCutEncounters` (Safari Zone, 2026-09-22); (map instances, tables — to come) | encounters, zones, roam, map |
+| cut | 2 | `UCRadio`, `UCKantoRoamers`, `UCSafari` + `UCCutEncounters` + `UCCutBlocks` (Safari Zone, 2026-09-22); (map instances, tables — to come) | encounters, zones, roam, blocks, map |
 | 251 | 3 | `UCStarterRoamer`; (caves, Mew/Mewtwo, tables — to come) | encounters, zones, roam, map, npc |
 | qol | 4 | (to come) | – |
 
@@ -41,7 +43,7 @@ Definitions live in `tools/patcher.py` `UC_MODULES` and `src/uc/module_constants
 
 1. TimoVM's Mail Writer bootstrap (his guide).
 2. `core`, then `base`.
-3. The union of the dependencies of the modules you want, e.g. `encounters`, `zones` and `roam`.
+3. The union of the dependencies of the modules you want, e.g. `encounters`, `zones`, `roam` and `blocks`.
 4. Each module: its unit codes, the last of which is the enable code.
 5. Later: `enable <module>` / `disable <module>`, 1 mail each.
 
