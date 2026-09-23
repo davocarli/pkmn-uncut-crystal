@@ -22,12 +22,7 @@ SECTION "uc starter roamer", ROM0[$0A00]
 LOAD "uc starter roamer wram", WRAMX[$DA00], BANK[4] ; window 4
 
 UCStarterRoamer::
-    db "UC"
-    jp .frame
-    jp .step
-
-.frame
-    ret
+    db "UC" ; step code follows
 
 .step
     ld a, [UCRoamRegion]

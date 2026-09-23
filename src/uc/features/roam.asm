@@ -22,13 +22,7 @@ SECTION "uc roam", ROM0[$0800]
 LOAD "uc roam wram", WRAMX[$D800], BANK[4] ; window 3
 
 UCRoam::
-    db "UC"
-    jp .frame
-    jp .step
-
-
-.frame
-    ret
+    db "UC" ; step code follows
 
 .step
     ld hl, wMapGroup ; Address of current map group

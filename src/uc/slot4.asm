@@ -23,15 +23,13 @@ UCModules:: db 0 ; One bit per enabled module, set by each module's install code
 
 Frame4: ; Contains code to run every frame
     ld hl, FrameFeatures ; Load the address of frame features table
-    ld bc, 0 ; Set bc to 0 for calculating table offset
     jr RunFeatures ; Runs the features from the loaded table
 
 Step4: ; Contains code to run every step
     ld hl, StepFeatures ; Load the address of step features table
-    ld bc, 3 ; Set bc to 3 for calculating table offset
     ; falls naturally into RunFeatures
 
-RunFeatures: ; Runs the features from the loaded table
+RunFeatures: ; Runs the features from the loaded table. A feature is "UC" then its code
 .loop
     ld a, [hli] ; low byte
     ld e, a ; Store low byte in register e
@@ -49,7 +47,6 @@ RunFeatures: ; Runs the features from the loaded table
     jr z, .loop ; skip the feature
 .run
     push hl ; The feature may modify hl, so we save it first
-    push bc ; Save bc as the feature may modify it
     ld h, d ; set the high byte of hl to d
     ld l, e ; Set the low byte of hl to e
     ld a, [hli]
@@ -58,10 +55,8 @@ RunFeatures: ; Runs the features from the loaded table
     ld a, [hli]
     cp 'C'
     jr nz, .next ; If not "UC", skip -- not installed
-    add hl, bc ; hl points to the feature's code
-    call _hl_ ; Call the feature at the address now stored in hl
+    call _hl_ ; Call the feature's code, right after its signature
 .next ; Label to continue to next feature in the table
-    pop bc ; Restore the original bc value we pushed
     pop hl ; Restore the original hl value we pushed
     jr .loop ; Repeat the loop
 
@@ -150,7 +145,8 @@ UCRunScript::
     xor a
     ret
 
-; Feature address, then the module it belongs to (0 = always on)
+; Feature address, then the module it belongs to (0 = always on).
+; A feature with both hooks has a second signature for its step half
 FrameFeatures:
     dw UCTrainerHouse
     db 0
@@ -175,9 +171,9 @@ StepFeatures:
     db MOD_251
     dw UCGSBall
     db 0
-    dw UCTrainerHouse
+    dw UCTrainerHouseStep
     db 0
-    dw UCSafari ; the zone's encounters
+    dw UCSafariStep ; the zone's encounters
     db MOD_CUT
     dw 0 ; End of step features list
 

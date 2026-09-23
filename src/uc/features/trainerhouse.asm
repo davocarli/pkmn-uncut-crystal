@@ -29,13 +29,7 @@ SECTION "uc trainerhouse", ROM0[$0340]
 LOAD "uc trainerhouse wram", WRAMX[$D340], BANK[4]
 
 UCTrainerHouse::
-    db $55, $43 ; "UC" signature, as bytes since the charmap is loaded
-    jp .frame
-    jp .step
-
-.loaded: db 0 ; Indicates if we already loaded the trainer this run
-.armed: db 0 ; Will be set to 1 when battling David
-.pending: db 0 ; Indicates that success message is pending
+    db $55, $43 ; "UC" signature, as bytes since the charmap is loaded. Frame code follows
 
 .frame
     ld hl, wBattleMode ; Address of battle mode
@@ -74,21 +68,29 @@ UCTrainerHouse::
     ld [.pending], a ; Set the success message pending flag
     ret
 
+.loaded: db 0 ; Indicates if we already loaded the trainer this run
+.armed: db 0 ; Will be set to 1 when battling David
+.pending: db 0 ; Indicates that success message is pending
+
+; step half, listed separately in the step table. New scope: the shared bytes above are named in full
+UCTrainerHouseStep::
+    db $55, $43 ; "UC" signature, the step code follows
+
 .step
     ; Display a success message if pending
-    ld a, [.pending]
+    ld a, [UCTrainerHouse.pending]
     and a
     jr z, .install ; If no message pending, skip
     ld hl, .bedtext ; Load bed text message
     call UCShowMessage
     ret nz ; Keep pending if another script is currently queued
     xor a ; Clear the accumulator
-    ld [.pending], a
+    ld [UCTrainerHouse.pending], a
     ret
 
 .install
     ; Install the trainer house default trainer if not already loaded
-    ld a, [.loaded]
+    ld a, [UCTrainerHouse.loaded]
     and a ;If non-zero
     ret nz
     xor a
@@ -105,7 +107,7 @@ UCTrainerHouse::
 .done
     call CloseSRAM
     ld a, 1
-    ld [.loaded], a
+    ld [UCTrainerHouse.loaded], a
     ret
 
 .data

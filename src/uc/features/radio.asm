@@ -22,9 +22,7 @@ SECTION "uc radio", ROM0[$0720]
 LOAD "uc radio wram", WRAMX[$D720], BANK[4] ; window 2
 
 UCRadio::
-    db $55, $43 ; "UC" signature, as bytes since the charmap is loaded
-    jp .frame
-    jp .step
+    db $55, $43 ; "UC" signature, as bytes since the charmap is loaded. Frame code follows
 
 .frame
     ld a, [wJumptableIndex] ; Load the current state of the pokegear
@@ -66,9 +64,6 @@ UCRadio::
     ld [de], a ; Store the character at the destination location
     inc de ; Increment the destination pointer
     jr .copyname ; loop for the next character, until early return
-
-.step
-    ret
 
 ; knob value, track, name ended by "@"
 .stations

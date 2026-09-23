@@ -7,8 +7,9 @@
 ; surf, one of the rods, headbutt -- then roll their own chance out of 256.
 ; Entries are checked in order and share one roll, so several on the same map
 ; take adjacent bands instead of competing for the same numbers.
-; A table is a list of maps: map_id, then 3-byte entries (method, species,
-; chance) ended by a 0 method, then the next map. A 0 group ends the table.
+; A table is a list of blocks: map_id, method, then 2-byte entries (species,
+; chance) ended by a 0 species, then the next block. A map with several
+; methods repeats the block. A 0 group ends the table.
 
 INCLUDE "constants/hardware.inc"
 INCLUDE "macros/const.asm"
@@ -41,12 +42,7 @@ SECTION "uc encounters", ROM0[$0420]
 LOAD "uc encounters wram", WRAMX[$D420], BANK[4]
 
 UCEncounters::
-    db "UC"
-    jp .frame
-    jp .step
-
-.handled: db 0 ; Set once we've rolled for this battle
-.roll: db 0 ; Random number rolled for this battle
+    db "UC" ; frame code follows
 
 .frame
     ldh a, [hMapAnims]
@@ -163,13 +159,13 @@ UCEncounters::
     ld a, b ; Load current map group
     cp d ; Compare current map group
     jr nz, .skipmap ; Skip if map group doesn't match
-.entries
-    ld a, [hli] ; Load the encounter method
-    and a ; If the encounter method is 0, end of entries for this map
-    jr z, .loop ; Continue loop to next map's entries
+    ld a, [hli] ; Load the block's encounter method
     and c ; Is current encounter method included
-    jr z, .skipentry ; Skip if encounter method doesn't match
-    ld a, [hli] ; Load species for this encounter
+    jr z, .skipblock ; Skip the whole block if not
+.entries
+    ld a, [hli] ; Load species for this entry
+    and a ; If the species is 0, end of the block
+    jr z, .loop ; Continue loop to the next block
     ld b, a ; Store in b
     ld a, [.roll] ; Get rolled number
     cp [hl] ; Compare with the roll chance for the encounter
@@ -178,18 +174,15 @@ UCEncounters::
     ld [.roll], a ; Store the updated roll number
     inc hl ; Move to the next entry to compare new roll number
     jr .entries ; Continue loop for next entry
-.skipentry
-    inc hl ; Increment to rol chance
-    inc hl ; Increment to next entry
-    jr .entries ; Go back to loop to check next entry
 
 .skipmap
-    ld a, [hli] ; Load next piece of data
-    and a ; Check if current map entry is 0 (end of list)
-    jr z, .loop ; Jump to loop if end of map entry list
-    inc hl ; Increment
-    inc hl ; Move to the next map entry
-    jr .skipmap ; Loop until we hit 0 (end of map) and run .loop
+    inc hl ; Past the method
+.skipblock
+    ld a, [hli] ; Load next species
+    and a ; Check if 0 (end of block)
+    jr z, .loop ; Jump to loop if end of block
+    inc hl ; Past the chance, to the next entry
+    jr .skipblock ; Loop until we hit 0 (end of block) and run .loop
 
 .tabledone
     pop hl ; Back to the list
@@ -210,8 +203,8 @@ UCEncounters::
     call UCPokeB1
     ret
 
-.step
-    ret
+.handled: db 0 ; Set once we've rolled for this battle
+.roll: db 0 ; Random number rolled for this battle
 
 ; Encounter tables, one per module: module bit (0 = always on), table address.
 ; Each table is its own image, see features/*_table.asm and *_encounters.asm

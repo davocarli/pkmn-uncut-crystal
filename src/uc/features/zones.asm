@@ -23,12 +23,7 @@ SECTION "uc zones", ROM0[$0600]
 LOAD "uc zones wram", WRAMX[$D600], BANK[4] ; Loading into unused space window 2
 
 UCZones::
-    db "UC" ; Signature of installed feature
-    jp .frame
-    jp .step
-
-.saved: db 0 ; Original map environment
-.savedmap: db 0, 0 ; Map group and number the saved environment belongs to. Group 0 = nothing forced
+    db "UC" ; Signature of installed feature, the frame code follows
 
 .frame
     ldh a, [hMapAnims] ; Load map animations flag address
@@ -163,8 +158,8 @@ UCZones::
     ld [.savedmap], a ; Nothing forced
     ret
 
-.step
-    ret
+.saved: db 0 ; Original map environment
+.savedmap: db 0, 0 ; Map group and number the saved environment belongs to. Group 0 = nothing forced
 
 ; Zone tables, one per module: module bit (0 = always on), table address.
 ; Each table is its own image, see features/*_zones.asm

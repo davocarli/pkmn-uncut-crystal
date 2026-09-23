@@ -21,12 +21,7 @@ SECTION "uc kanto roamers", ROM0[$08E4]
 LOAD "uc kanto roamers wram", WRAMX[$D8E4], BANK[4] ; window 3, after UCRoam
 
 UCKantoRoamers::
-    db "UC"
-    jp .frame
-    jp .step
-
-.frame
-    ret
+    db "UC" ; step code follows
 
 .step
     ld a, [UCRoamRegion] ; Load the current region into register a

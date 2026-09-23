@@ -30,9 +30,7 @@ SECTION "uc safari", ROM0[$0A70]
 LOAD "uc safari wram", WRAMX[$DA70], BANK[4] ; window 4, after the starter roamer
 
 UCSafari::
-    db "UC"
-    jp .frame
-    jp .step
+    db "UC" ; frame code follows
 
 .frame
     ldh a, [hMapAnims] ; Load the map animations flag
@@ -67,6 +65,10 @@ UCSafari::
     ld [hli], a ; First block, move to the next
     ld [hl], a ; Second block: the exit warps fire now
     ret
+
+; step half, listed separately in the step table
+UCSafariStep::
+    db "UC" ; step code follows
 
 .step
     ld hl, wMapGroup ; Load Map Group address

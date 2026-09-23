@@ -3,7 +3,10 @@
 The program is installed as **units** (one image at a fixed address, delivered by one mail-code
 group) grouped into **modules** the player picks. Two mechanisms, deliberately separate:
 
-- **Signatures say what is installed.** Every image starts with `"UC"`; the runtime's walker skips a
+- **Signatures say what is installed.** Every feature image starts with `"UC"` and its code follows
+  directly (since 2026-09-22; no `jp` header). A feature with both hooks carries a second `"UC"` in
+  front of its step code (`UCTrainerHouseStep`, `UCSafariStep`) and the step table lists that
+  address; shared state is named in full across the two label scopes. The runtime's walker skips a
   feature whose signature is missing. Frameworks never check that a dependency is present: the guide
   says to install dependencies first, and skipping that is user error.
 - **`UCModules` (slot4.asm) says what is enabled.** One bit per module, starts at 0. A module's

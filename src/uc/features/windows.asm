@@ -12,14 +12,7 @@ SECTION "uc windows", ROM0[$0520]
 LOAD "uc windows wram", WRAMX[$D520], BANK[4] ; window 1, after the encounters
 
 UCWindows::
-    db "UC"
-    jp .frame
-    jp .step
-
-.loaded: db 0 ; non-zero once the windows are in bank 4, this power-on
-
-.frame
-    ret
+    db "UC" ; step code follows
 
 .step
     ld a, [.loaded]
@@ -50,6 +43,8 @@ UCWindows::
 .done
     ld [.loaded], a ; a is still the end byte, non-zero
     jp CloseSRAM
+
+.loaded: db 0 ; non-zero once the windows are in bank 4, this power-on
 
 ; sram bank, wram destination, length, sram source. in bank 4 order
 ; keep in step with UC_SLOT4_WINDOWS in tools/patcher.py
