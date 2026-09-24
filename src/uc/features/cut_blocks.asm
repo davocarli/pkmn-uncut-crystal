@@ -1,5 +1,5 @@
 ; Restore Cut Content module: its block table. Read by features/blocks.asm,
-; which owns the format: uc_map, then uc_block x, y, id entries ended by a 0,
+; which owns the format: uc_map, then uc_block x, y, id entries, uc_map_end,
 ; then the next map. Block ids are the map's own tileset's.
 
 INCLUDE "macros/const.asm"
@@ -14,7 +14,7 @@ UCCutBlocks::
     ; Safari Zone: the gate in Fuchsia is a wall, the zone's exit warps sit on plain floor
     uc_map FUCHSIA_CITY
     uc_block 9, 1, $3A ; kanto: the gate's wall with the door bottom left
-    db 0
+    uc_map_end
 
     uc_map SAFARI_ZONE_BETA
     ; the entrance, laid out like the National Park's south gate: rails two
@@ -37,7 +37,7 @@ UCCutBlocks::
     uc_block 4, 13, $2D
     uc_block 5, 13, $2D
     uc_block 6, 13, $2E
-    db 0
+    uc_map_end
 
     db 0 ; End of table
 

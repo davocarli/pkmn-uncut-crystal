@@ -13,9 +13,10 @@
 ; wrong, unlike writes with it on.
 ; Anywhere else (walking across a connection) we queue a refreshmap script,
 ; what a map script runs after changeblock, once map entry is over.
-; A table is a list of maps: map_id, then 3-byte entries (address high, low,
-; block id) ended by a 0, then the next map. A 0 group ends the table.
-; block_constants.asm has macros that work the address out from (x, y)
+; A table is a list of maps: map_id, a size byte, then 3-byte entries (address
+; high, low, block id) ended by a 0, then the next map. A 0 group ends the
+; table. block_constants.asm has macros that work the address and size out;
+; UCFindMap does the lookup, so one entry per map
 
 INCLUDE "constants/hardware.inc"
 INCLUDE "macros/const.asm"
@@ -29,8 +30,6 @@ DEF hSCX            EQU $FFCF
 DEF hSCY            EQU $FFD0
 DEF hMapAnims       EQU $FFDE ; 0 outside the overworld
 DEF wBGMapAnchor    EQU $D152 ; bank 1, top left of the screen in the bg map
-DEF wMapGroup       EQU $DCB5 ; bank 1
-DEF wMapNumber      EQU $DCB6 ; bank 1
 DEF LoadOverworldTilemapAndAttrmapPals EQU $2173 ; tilemap + attrmap from the grid, saves and restores the rom bank
 DEF GetMovementPermissions EQU $2914 ; what the player can step onto, from the grid; refreshmap calls it too
 DEF wTilemap        EQU $C4A0 ; wram0, 20x18 tile ids of the screen
@@ -44,42 +43,13 @@ UCBlocks::
     db "UC" ; frame code follows
 
 .frame
-    ld hl, wMapGroup
-    call UCPeekB1
-    ld d, a ; d = map group
-    inc hl
-    call UCPeekB1
-    ld e, a ; e = map number
     ld hl, .tables
-.tableloop
-    ld a, [hli] ; Module the table belongs to, 0 = always on
-    cp TABLE_END ; If end of the list
-    jr z, .done
-    and a
-    jr z, .tableok
-    push hl
-    ld hl, UCModules
-    and [hl] ; If the module is off
-    pop hl
-    jr z, .tableskip ; skip its table
-.tableok
-    ld a, [hli]
-    push hl ; Remember where we are in the list
-    ld h, [hl]
-    ld l, a ; hl = the table
-.maps
-    ld a, [hli] ; Map group
-    and a ; If 0
-    jr z, .tabledone ; end of the table
-    cp d ; Compare with our group
-    ld a, [hli] ; Map number, doesn't touch the flags
-    jr nz, .skipentries ; Wrong group
-    cp e ; Compare with our map number
-    jr nz, .skipentries ; Wrong map
+    call UCFindMap ; c with hl = this map's cells, if it is listed
+    jr nc, .done
 .entries
     ld a, [hli] ; Address high byte
     and a ; If 0
-    jr z, .maps ; end of this map, on to the next
+    jr z, .done ; end of the map's cells
     ld b, a
     ld c, [hl] ; Address low byte
     inc hl
@@ -93,22 +63,6 @@ UCBlocks::
 .next
     inc hl ; Past the block
     jr .entries
-.skipentries
-    ld a, [hli] ; Address high byte
-    and a ; If 0
-    jr z, .maps ; end of this map
-    inc hl
-    inc hl ; Past the low byte and the block
-    jr .skipentries
-
-.tabledone
-    pop hl ; Back to the list
-    inc hl
-    jr .tableloop
-.tableskip
-    inc hl
-    inc hl ; Past the address
-    jr .tableloop
 
 .done
     ld a, [.pending]

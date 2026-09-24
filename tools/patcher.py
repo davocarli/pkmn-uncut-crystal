@@ -108,20 +108,22 @@ W_UC_PARKED_CALL = 0xDA0E
 UC_IMAGE_BANK = 0
 UC_IMAGE_OFFSET = 0xAC6B
 UC_IMAGE_END = 0xADA4  # window 10 starts here; the core image must stop short of it
-# slot 4 windows: (bank 4 base, sram bank, sram addr, length), in bank 4 order
+# slot 4 windows: (bank 4 base, sram bank, sram addr, length, uc.bin offset of the base), in bank 4 order.
+# an image at bank 4 address A is assembled at uc.bin offset A - $D000, except window 5: the kernel's
+# section is at $0080-$0187, so window 5 images assemble at $1000 past their address (SECTION ROM0[$1108])
 UC_SLOT4_WINDOWS = [
-    (0xD108, 0, 0xBF12, 0xC000 - 0xBF12),  # window 5: loaded by UCWindows (features/windows.asm)
-    (0xD200, 0, 0xAE6B, 0xB200 - 0xAE6B),  # window 1: loaded by the kernel's Init
-    (0xD600, 1, 0xBE57, 0xC000 - 0xBE57),  # window 2, UCWindows from here on; keep in step with its table
-    (0xD800, 2, 0xBE30, 0xC000 - 0xBE30),  # window 3
-    (0xD9D0, 0, 0xAC30, 0xAC60 - 0xAC30),  # window 6: padding after sMysteryGiftTrainer
-    (0xDA00, 3, 0xBEEC, 0xC000 - 0xBEEC),  # window 4: after the 189-byte RAM Writer reservation
-    (0xDB14, 1, 0xAB83, 0xAD0D - 0xAB83),  # window 7: padding before sChecksum
-    (0xDCA2, 0, 0xBD83, 0xBF0D - 0xBD83),  # window 8: padding before sBackupChecksum
-    (0xDE30, 1, 0xB160, 0xB260 - 0xB160),  # window 9: padding after sBox
-    (0xDF30, 0, 0xADA4, UC_IMAGE_OFFSET + 0x200 - 0xADA4),  # window 10: slack after the core image
+    (0xD108, 0, 0xBF12, 0xC000 - 0xBF12, 0x1108),  # window 5: loaded by UCWindows (features/windows.asm)
+    (0xD200, 0, 0xAE6B, 0xB200 - 0xAE6B, 0x0200),  # window 1: loaded by the kernel's Init
+    (0xD600, 1, 0xBE57, 0xC000 - 0xBE57, 0x0600),  # window 2, UCWindows from here on; keep in step with its table
+    (0xD800, 2, 0xBE30, 0xC000 - 0xBE30, 0x0800),  # window 3
+    (0xD9D0, 0, 0xAC30, 0xAC60 - 0xAC30, 0x09D0),  # window 6: padding after sMysteryGiftTrainer
+    (0xDA00, 3, 0xBEEC, 0xC000 - 0xBEEC, 0x0A00),  # window 4: after the 189-byte RAM Writer reservation
+    (0xDB14, 1, 0xAB83, 0xAD0D - 0xAB83, 0x0B14),  # window 7: padding before sChecksum
+    (0xDCA2, 0, 0xBD83, 0xBF0D - 0xBD83, 0x0CA2),  # window 8: padding before sBackupChecksum
+    (0xDE30, 1, 0xB160, 0xB260 - 0xB160, 0x0E30),  # window 9: padding after sBox
+    (0xDF30, 0, 0xADA4, UC_IMAGE_OFFSET + 0x200 - 0xADA4, 0x0F30),  # window 10: slack after the core image
 ]
-# every slot 4 image: (start, end) labels in uc.sym. offset in uc.bin = addr - $D000;
+# every slot 4 image: (start, end) labels in uc.sym. offset in uc.bin = window bin offset + addr - base;
 # a label outside a LOAD block is the offset itself
 UC_SLOT4_IMAGES = [
     ("UCSlot4", "UCSlot4End"),
@@ -139,8 +141,13 @@ UC_SLOT4_IMAGES = [
     ("UCStarterRoamer", "UCStarterRoamerEnd"),
     ("UCCutEncounters", "UCCutEncountersEnd"),
     ("UCSafari", "UCSafariEnd"),
+    ("UCFindMap", "UCFindMapEnd"),
     ("UCBlocks", "UCBlocksEnd"),
     ("UCCutBlocks", "UCCutBlocksEnd"),
+    ("UCNpcSwap", "UCNpcSwapEnd"),
+    ("UCCutNpcs", "UCCutNpcsEnd"),
+    ("UCMapHijack", "UCMapHijackEnd"),
+    ("UCCutMaps", "UCCutMapsEnd"),
     # options menu shelved 2026-09-20 (src/uc/shelved/ucoptions.asm), too big for its value
 ]
 
@@ -150,13 +157,15 @@ UC_SLOT4_IMAGES = [
 UC_MODULES = {
     "base": {
         "bit": None,
-        "images": ["UCSlot4", "UCWindows", "UCGSBall", "UCTrainerHouse"],
+        "images": ["UCSlot4", "UCWindows", "UCGSBall", "UCTrainerHouse", "UCFindMap"],
         "zero": ["UCZoneCurrent"],
     },
     "encounters": {"bit": None, "images": ["UCEncounters"]},
     "zones": {"bit": None, "images": ["UCZones"]},
     "roam": {"bit": None, "images": ["UCRoam"]},
     "blocks": {"bit": None, "images": ["UCBlocks"]},
+    "npcswap": {"bit": None, "images": ["UCNpcSwap"]},
+    "maps": {"bit": None, "images": ["UCMapHijack"]},
     "exclusives": {"bit": 0, "images": ["UCExclusivesTable"], "deps": ["encounters"]},
     "kanto": {
         "bit": 1,
@@ -165,8 +174,8 @@ UC_MODULES = {
     },
     "cut": {
         "bit": 2,
-        "images": ["UCRadio", "UCKantoRoamers", "UCCutEncounters", "UCSafari", "UCCutBlocks"],
-        "deps": ["encounters", "zones", "roam", "blocks"],
+        "images": ["UCRadio", "UCKantoRoamers", "UCCutEncounters", "UCSafari", "UCCutBlocks", "UCCutNpcs", "UCCutMaps"],
+        "deps": ["encounters", "zones", "roam", "blocks", "npcswap", "maps"],
     },
     "251": {"bit": 3, "images": ["UCStarterRoamer"], "deps": ["encounters", "zones", "roam"]},
     "qol": {"bit": 4, "images": [], "deps": []},
@@ -294,7 +303,7 @@ def uc_label_sram(label: str):
     addr = read_sym(UC_SYM)[label]
     if addr < 0xD000:
         addr += 0xD000
-    for base, bank, sram, length in UC_SLOT4_WINDOWS:
+    for base, bank, sram, length, _ in UC_SLOT4_WINDOWS:
         if base <= addr < base + length:
             return bank, sram + addr - base
     raise ValueError(f"{label} is outside every slot 4 window")
@@ -319,17 +328,22 @@ def uc_runtime_writes(images=UC_SLOT4_IMAGES):
     writes = []
     for start, end in images:
         addr, end_addr = symdata[start], symdata[end]
+        # a label outside a LOAD block is the uc.bin offset itself: bank 4 address minus $D000
         if addr < 0xD000:
-            addr, end_addr = addr + 0xD000, end_addr + 0xD000
-        for base, bank, sram, length in UC_SLOT4_WINDOWS:
+            addr += 0xD000
+        if end_addr < 0xD000:
+            end_addr += 0xD000
+        for base, bank, sram, length, binbase in UC_SLOT4_WINDOWS:
             if base <= addr < base + length:
                 break
         else:
             raise ValueError(f"{start} is outside every slot 4 window")
         if end_addr > base + length:
             raise ValueError(f"{start} ends past its slot 4 window")
-        offset = addr - 0xD000
+        offset = binbase + addr - base
         image = bindata[offset : offset + end_addr - addr]
+        if len(image) < end_addr - addr:
+            raise ValueError(f"{start} is past the end of uc.bin (window bin offset wrong?)")
         writes.append((bank, sram + addr - base, image))
     return writes
 

@@ -158,6 +158,10 @@ FrameFeatures:
     db MOD_CUT
     dw UCBlocks ; map block overrides, tables per module
     db 0
+    dw UCNpcSwap ; NPC script swaps, tables per module
+    db 0
+    dw UCMapHijack ; map-header hijack, tables per module
+    db 0
     dw 0 ; End of frame features list
 
 StepFeatures:
@@ -175,6 +179,8 @@ StepFeatures:
     db 0
     dw UCSafari ; the zone's encounters
     db MOD_CUT
+    dw UCMapHijackStep ; exits of hijacked maps
+    db 0
     dw 0 ; End of step features list
 
 UCSlot4End::
