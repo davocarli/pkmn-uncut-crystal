@@ -1,8 +1,10 @@
+; Shelved 2026-09-25: replaced by frameworks/npcinject.asm, which overwrites a whole
+; record and so swaps the script too. Wants npc_constants.asm, gone: see git history.
 ; NPC script swap. When a map loads, the game copies its object events into
 ; wMapObjects, 16 bytes each, and talking to one runs the script whose pointer
 ; sits in that record. This points a chosen record at a script of ours, copied
-; into the message buffer so the game can read it. One buffer, so one NPC per
-; map. Tables per module, looked up by UCFindMap: uc_npc rows (map_id, size,
+; into a buffer in the game's wram so it can read it. One buffer, so one NPC
+; per map. Tables per module, looked up by UCFindMap: uc_npc rows (map_id, size,
 ; the record's pointer address, the script and its length), a 0 group ends
 ; the table.
 
@@ -10,9 +12,9 @@ INCLUDE "constants/hardware.inc"
 INCLUDE "macros/const.asm"
 INCLUDE "macros/scripts/maps.asm"
 INCLUDE "constants/map_constants.asm"
-INCLUDE "module_constants.asm"
+INCLUDE "core/module_constants.asm"
+INCLUDE "npc_constants.asm"
 
-DEF UC_MSG_SCRIPT  EQU $D280 ; bank 1, the runtime's script buffer (slot4.asm)
 
 SECTION "uc npcswap", ROM0[$0CA2]
 LOAD "uc npcswap wram", WRAMX[$DCA2], BANK[4] ; window 8, first thing in it
@@ -34,7 +36,7 @@ UCNpcSwap::
     ld l, c
     call UCPeekB1 ; Low byte of the pointer the game holds
     pop hl
-    cp LOW(UC_MSG_SCRIPT) ; Already ours?
+    cp LOW(UC_NPC_SCRIPT) ; Already ours?
     ret z ; Already ours
     ld a, [hli]
     ld e, a
@@ -43,7 +45,7 @@ UCNpcSwap::
     ld a, [hl] ; Its length
     push bc ; The pointer address, needed after the copy
     ld b, a
-    ld hl, UC_MSG_SCRIPT
+    ld hl, UC_NPC_SCRIPT
 .copy
     ld a, [de] ; Next byte of the script
     inc de
@@ -52,10 +54,10 @@ UCNpcSwap::
     dec b
     jr nz, .copy
     pop hl ; hl = the pointer address
-    ld a, LOW(UC_MSG_SCRIPT)
+    ld a, LOW(UC_NPC_SCRIPT)
     call UCPokeB1 ; Point the record at the buffer, low byte
     inc hl
-    ld a, HIGH(UC_MSG_SCRIPT)
+    ld a, HIGH(UC_NPC_SCRIPT)
     call UCPokeB1 ; then the high byte
     ret
 

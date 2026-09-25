@@ -1,10 +1,18 @@
-; Restore Cut Content module: its NPC script table. Read by features/npcswap.asm,
-; which owns the format: uc_npc rows, a 0 group ends the table. One NPC per
-; map. The scripts are included from npcs/, one file each, assembled for
-; $D280 (see sailor.asm).
+; Requires: npcinject
+; Restore Cut Content module: its NPC injection table. Read by
+; frameworks/npcinject.asm, which owns the format: uc_inject rows, a 0 group ends
+; the table. One NPC per map. A row is
+;   uc_inject MAP, SLOT, X, Y, SPRITE, MOVEMENT, RADIUS_X, RADIUS_Y, PALETTE
+;   uc_part Name          ; one per script fragment, in copy order
+;   uc_spawn_reload_appear SLOT   ; or uc_spawn_appear SLOT, or uc_spawn_none
+;   uc_inject_end
+; The scripts come from fragment files included after the table, one per NPC,
+; assembled for UC_NPC_SCRIPT (see inject_constants.asm for the LOAD UNION shape
+; and the split of a fragment over two windows). Empty until the NPCs land.
 
 INCLUDE "constants/hardware.inc"
 INCLUDE "macros/const.asm"
+INCLUDE "macros/data.asm" ; dn, for the record's packed bytes
 INCLUDE "macros/scripts/maps.asm"
 INCLUDE "macros/scripts/events.asm"
 INCLUDE "macros/scripts/text.asm"
@@ -12,18 +20,19 @@ INCLUDE "constants/charmap.asm"
 INCLUDE "constants/map_constants.asm"
 INCLUDE "constants/event_flags.asm"
 INCLUDE "constants/ram_constants.asm"
-INCLUDE "npc_constants.asm"
+INCLUDE "constants/map_object_constants.asm" ; SPRITEMOVEDATA_*, and the record offsets
+INCLUDE "constants/sprite_constants.asm"
+INCLUDE "constants/sprite_data_constants.asm"
+INCLUDE "frameworks/inject_constants.asm"
 
-SECTION "uc cut npcs", ROM0[$0E30]
-LOAD "uc cut npcs wram", WRAMX[$DE30], BANK[4] ; window 9, first thing in it
+SECTION "uc cut injects", ROM0[$0D12]
+LOAD "uc cut injects wram", WRAMX[$DD12], BANK[4] ; window 8, after the injector
 
-UCCutNpcs::
-    uc_npc OLIVINE_PORT, 3, Sailor ; the sailor at the ship after the Hall of Fame
-
+UCCutInjects::
     db 0 ; End of table
 ENDL
 
-; The scripts, one file per NPC, stored after the table
-INCLUDE "npcs/sailor.asm"
+; The script fragments, one file per NPC, each in its own section
+INCLUDE "npcs/scientist.asm"
 
-UCCutNpcsEnd:: ; as an offset in uc.bin, like the Src labels
+UCCutInjectsEnd:: ; as an offset in uc.bin, like the Src labels

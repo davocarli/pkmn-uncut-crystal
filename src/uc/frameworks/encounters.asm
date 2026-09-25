@@ -20,9 +20,9 @@ INCLUDE "constants/pokemon_constants.asm"
 INCLUDE "constants/text_constants.asm"
 INCLUDE "constants/battle_constants.asm"
 INCLUDE "constants/ram_constants.asm"
-INCLUDE "zone_constants.asm"
-INCLUDE "module_constants.asm"
-INCLUDE "encounter_constants.asm"
+INCLUDE "frameworks/zone_constants.asm"
+INCLUDE "core/module_constants.asm"
+INCLUDE "frameworks/encounter_constants.asm"
 
 DEF hMapAnims             EQU $FFDE ; 0 from the start of the battle intro until after the battle
 DEF hRandomAdd            EQU $FFE1 ; Updated every frame by the game
@@ -215,6 +215,8 @@ UCEncounters::
     dw UCKantoEncounters
     db MOD_CUT
     dw UCCutEncounters
+    db MOD_251
+    dw UC251Encounters ; after the cut table: its blocks take the band they leave
     db TABLE_END
 
 UCEncountersEnd::

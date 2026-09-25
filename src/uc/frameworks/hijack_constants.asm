@@ -1,4 +1,4 @@
-; Map-header hijack tables, for features/hijack.asm.
+; Map-header hijack tables, for frameworks/maphijack.asm.
 ; The game copies a map's header into wram on every load; the hijack rewrites
 ; that copy so an unreachable host map shows a cut map's blocks instead.
 

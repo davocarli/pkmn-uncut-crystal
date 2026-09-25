@@ -12,8 +12,8 @@ INCLUDE "macros/const.asm"
 INCLUDE "macros/scripts/maps.asm"
 INCLUDE "macros/scripts/events.asm"
 INCLUDE "constants/map_constants.asm"
-INCLUDE "module_constants.asm"
-INCLUDE "hijack_constants.asm"
+INCLUDE "core/module_constants.asm"
+INCLUDE "frameworks/hijack_constants.asm"
 
 DEF hMapEntryMethod    EQU $FF9F ; non-zero from a warp being taken until the new map is ready
 DEF wMapTileset        EQU $D199 ; bank 1, first of the 10 header bytes
@@ -31,8 +31,8 @@ DEF GetMapScreenCoords_BANK EQU $41
 DEF LoadBlockData      EQU $24CD ; the block grid from the header
 DEF BufferScreen       EQU $2879 ; saves the 6x5 blocks at the anchor; a reload pastes them back over the grid
 
-SECTION "uc maphijack", ROM0[$0D20]
-LOAD "uc maphijack wram", WRAMX[$DD20], BANK[4] ; window 8, after the npc swap
+SECTION "uc maphijack", ROM0[$0D13]
+LOAD "uc maphijack wram", WRAMX[$DD13], BANK[4] ; window 8, after the inject table
 
 UCMapHijack::
     db "UC" ; frame code follows

@@ -1,7 +1,10 @@
+; Shelved 2026-09-25: merged into features/cut_roamers.asm (.track) once the
+; Kanto birds were the framework's only user. Kept for reference.
 ; Roaming framework. Johto and Kanto each get three roamers: the game's three
 ; slots hold the set for the region the player is in, the other set waits in
-; sram. Runs on the step after a map change; the region units (kanto_roamers,
-; starter_roamer) read the two exported bytes.
+; sram. Runs on the step after a map change; the region units (cut_roamers)
+; read the two exported bytes. Slot 3 of the Johto set is unused since the
+; starter roamer was shelved (2026-09-25).
 
 INCLUDE "constants/hardware.inc"
 INCLUDE "macros/const.asm"

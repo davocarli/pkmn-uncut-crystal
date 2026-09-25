@@ -1,3 +1,5 @@
+; Shelved 2026-09-25: the roaming Johto starter is replaced by NPC gifts to come.
+; Outside the Makefile wildcard; slot 3 of the Johto roamer set is simply unused now.
 ; 251 Edition module: a Johto starter roams in slot 3. First the one weak
 ; against yours at level 5; once it is caught or beaten and the Elite Four are
 ; done, the one strong against yours at level 10. Slot 3's level is the state:

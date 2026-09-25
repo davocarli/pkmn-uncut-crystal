@@ -112,7 +112,7 @@ UC_IMAGE_END = 0xADA4  # window 10 starts here; the core image must stop short o
 # an image at bank 4 address A is assembled at uc.bin offset A - $D000, except window 5: the kernel's
 # section is at $0080-$0187, so window 5 images assemble at $1000 past their address (SECTION ROM0[$1108])
 UC_SLOT4_WINDOWS = [
-    (0xD108, 0, 0xBF12, 0xC000 - 0xBF12, 0x1108),  # window 5: loaded by UCWindows (features/windows.asm)
+    (0xD108, 0, 0xBF12, 0xC000 - 0xBF12, 0x1108),  # window 5: loaded by UCWindows (core/windows.asm)
     (0xD200, 0, 0xAE6B, 0xB200 - 0xAE6B, 0x0200),  # window 1: loaded by the kernel's Init
     (0xD600, 1, 0xBE57, 0xC000 - 0xBE57, 0x0600),  # window 2, UCWindows from here on; keep in step with its table
     (0xD800, 2, 0xBE30, 0xC000 - 0xBE30, 0x0800),  # window 3
@@ -136,16 +136,16 @@ UC_SLOT4_IMAGES = [
     ("UCKantoZones", "UCKantoZonesEnd"),
     ("UCKantoEncounters", "UCKantoEncountersEnd"),
     ("UCRadio", "UCRadioEnd"),
-    ("UCRoam", "UCRoamEnd"),
     ("UCKantoRoamers", "UCKantoRoamersEnd"),
-    ("UCStarterRoamer", "UCStarterRoamerEnd"),
     ("UCCutEncounters", "UCCutEncountersEnd"),
-    ("UCSafari", "UCSafariEnd"),
+    ("UCRoller", "UCRollerEnd"),
+    ("UCCutRoller", "UCCutRollerEnd"),
+    ("UC251Encounters", "UC251EncountersEnd"),
     ("UCFindMap", "UCFindMapEnd"),
     ("UCBlocks", "UCBlocksEnd"),
     ("UCCutBlocks", "UCCutBlocksEnd"),
-    ("UCNpcSwap", "UCNpcSwapEnd"),
-    ("UCCutNpcs", "UCCutNpcsEnd"),
+    ("UCNpcInject", "UCNpcInjectEnd"),
+    ("UCCutInjects", "UCCutInjectsEnd"),
     ("UCMapHijack", "UCMapHijackEnd"),
     ("UCCutMaps", "UCCutMapsEnd"),
     # options menu shelved 2026-09-20 (src/uc/shelved/ucoptions.asm), too big for its value
@@ -162,10 +162,10 @@ UC_MODULES = {
     },
     "encounters": {"bit": None, "images": ["UCEncounters"]},
     "zones": {"bit": None, "images": ["UCZones"]},
-    "roam": {"bit": None, "images": ["UCRoam"]},
     "blocks": {"bit": None, "images": ["UCBlocks"]},
-    "npcswap": {"bit": None, "images": ["UCNpcSwap"]},
+    "inject": {"bit": None, "images": ["UCNpcInject"]},
     "maps": {"bit": None, "images": ["UCMapHijack"]},
+    "roller": {"bit": None, "images": ["UCRoller"]},
     "exclusives": {"bit": 0, "images": ["UCExclusivesTable"], "deps": ["encounters"]},
     "kanto": {
         "bit": 1,
@@ -174,10 +174,10 @@ UC_MODULES = {
     },
     "cut": {
         "bit": 2,
-        "images": ["UCRadio", "UCKantoRoamers", "UCCutEncounters", "UCSafari", "UCCutBlocks", "UCCutNpcs", "UCCutMaps"],
-        "deps": ["encounters", "zones", "roam", "blocks", "npcswap", "maps"],
+        "images": ["UCRadio", "UCKantoRoamers", "UCCutEncounters", "UCCutRoller", "UCCutBlocks", "UCCutInjects", "UCCutMaps"],
+        "deps": ["encounters", "blocks", "inject", "maps", "roller"],
     },
-    "251": {"bit": 3, "images": ["UCStarterRoamer"], "deps": ["encounters", "zones", "roam"]},
+    "251": {"bit": 3, "images": ["UC251Encounters"], "deps": ["encounters"]},
     "qol": {"bit": 4, "images": [], "deps": []},
 }
 

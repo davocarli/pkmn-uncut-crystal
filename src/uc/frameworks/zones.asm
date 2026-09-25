@@ -9,8 +9,8 @@ INCLUDE "macros/const.asm"
 INCLUDE "macros/scripts/maps.asm"
 INCLUDE "constants/map_constants.asm"
 INCLUDE "constants/map_data_constants.asm"
-INCLUDE "zone_constants.asm"
-INCLUDE "module_constants.asm"
+INCLUDE "frameworks/zone_constants.asm"
+INCLUDE "core/module_constants.asm"
 
 DEF hMapAnims      EQU $FFDE ; Flag indicates whether map animations are enabled -- should always be true when the player is in the overworld
 DEF wEnvironment   EQU $D19A ; Current Environment type, such as "cave"

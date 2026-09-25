@@ -1,3 +1,4 @@
+; Requires: none
 ; This feature changes the default Trainer House trainer.
 ; The default trainer is set to me -- the developer of this SRAM hack.
 ; The feature will not overwrite any existing custom Trainer that may

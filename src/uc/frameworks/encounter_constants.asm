@@ -1,4 +1,4 @@
-; How an encounter happened, for the encounter override (features/encounters.asm).
+; How an encounter happened, for the encounter override (frameworks/encounters.asm).
 ; One bit each so an entry can accept several
 DEF UC_GRASS     EQU 1 << 0
 DEF UC_CAVE      EQU 1 << 1

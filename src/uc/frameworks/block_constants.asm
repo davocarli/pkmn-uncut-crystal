@@ -1,4 +1,4 @@
-; Map block tables, for the block override (features/blocks.asm).
+; Map block tables, for the block override (frameworks/blocks.asm).
 ; The game keeps the current map as one byte per block in wram0, with a
 ; 3-block border on every side, so cell (x, y) of a map w blocks wide is at
 ; wOverworldMapBlocks + (y + 3) * (w + 6) + x + 3. The macros do that sum

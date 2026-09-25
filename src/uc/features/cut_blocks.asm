@@ -1,11 +1,12 @@
-; Restore Cut Content module: its block table. Read by features/blocks.asm,
+; Requires: blocks
+; Restore Cut Content module: its block table. Read by frameworks/blocks.asm,
 ; which owns the format: uc_map, then uc_block x, y, id entries, uc_map_end,
 ; then the next map. Block ids are the map's own tileset's.
 
 INCLUDE "macros/const.asm"
 INCLUDE "macros/scripts/maps.asm"
 INCLUDE "constants/map_constants.asm"
-INCLUDE "block_constants.asm"
+INCLUDE "frameworks/block_constants.asm"
 
 SECTION "uc cut blocks", ROM0[$0C10]
 LOAD "uc cut blocks wram", WRAMX[$DC10], BANK[4] ; window 7, after the block override

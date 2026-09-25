@@ -23,7 +23,7 @@ INCLUDE "macros/const.asm"
 INCLUDE "macros/scripts/maps.asm"
 INCLUDE "macros/scripts/events.asm"
 INCLUDE "constants/map_constants.asm"
-INCLUDE "module_constants.asm"
+INCLUDE "core/module_constants.asm"
 
 DEF hMapEntryMethod EQU $FF9F ; non-zero from a warp being taken until the new map is ready
 DEF hSCX            EQU $FFCF

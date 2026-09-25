@@ -1,3 +1,4 @@
+; Requires: none
 ; Plays the unused tracks on dead-air radio frequencies. The game's own
 ; NoRadioStation silences and clears the name box whenever the knob moves,
 ; so this only ever has to start a track, never stop one.
@@ -6,7 +7,7 @@ INCLUDE "constants/hardware.inc"
 INCLUDE "macros/const.asm"
 INCLUDE "constants/charmap.asm"
 INCLUDE "constants/music_constants.asm"
-INCLUDE "module_constants.asm"
+INCLUDE "core/module_constants.asm"
 
 DEF PlayMusic                  EQU $3B97 ; de = song id, saves/restores the rom bank itself
 DEF wJumptableIndex            EQU $CF63 ; pokegear state, bank 0

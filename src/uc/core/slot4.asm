@@ -1,5 +1,5 @@
 INCLUDE "constants/hardware.inc"
-INCLUDE "module_constants.asm"
+INCLUDE "core/module_constants.asm"
 
 DEF _hl_               EQU $2FEC
 
@@ -158,28 +158,26 @@ FrameFeatures:
     db MOD_CUT
     dw UCBlocks ; map block overrides, tables per module
     db 0
-    dw UCNpcSwap ; NPC script swaps, tables per module
+    dw UCNpcInject ; injected NPCs, tables per module
     db 0
     dw UCMapHijack ; map-header hijack, tables per module
+    db 0
+    dw UCRollerFrame ; puts the unown sets back after a rolled battle
     db 0
     dw 0 ; End of frame features list
 
 StepFeatures:
     dw UCWindows ; first, so the other windows are loaded before anything reads them
     db 0
-    dw UCRoam ; before its units, they read what it works out this step
-    db 0
     dw UCKantoRoamers
     db MOD_CUT
-    dw UCStarterRoamer
-    db MOD_251
     dw UCGSBall
     db 0
     dw UCTrainerHouseStep
     db 0
-    dw UCSafari ; the zone's encounters
-    db MOD_CUT
     dw UCMapHijackStep ; exits of hijacked maps
+    db 0
+    dw UCRoller ; battles on maps with no wild table, after the hijack so its exit warp queues first
     db 0
     dw 0 ; End of step features list
 

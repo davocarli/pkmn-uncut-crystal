@@ -17,7 +17,7 @@ The special call is the **only** per-step ROM `call` that dispatches through a s
 
 ## Decision (2026-09-07, supersedes 2026-09-05): adopt save-time parking. IN SCOPE.
 
-**Implemented and verified in mGBA 2026-09-10** (`UCFrame` in `src/uc/kernel.asm`, 57 B): with ID 7 queued at save time, reset + two steps fires Mom's call and the framework survives; the same sequence without the hook loses it (baseline reproduced the same day). Bike-shop replay and nurse fix: written and verified on the cartridge save 2026-09-10.
+**Implemented and verified in mGBA 2026-09-10** (`UCFrame` in `src/uc/core/kernel.asm`, 57 B): with ID 7 queued at save time, reset + two steps fires Mom's call and the framework survives; the same sequence without the hook loses it (baseline reproduced the same day). Bike-shop replay and nurse fix: written and verified on the cartridge save 2026-09-10.
 The user reopened this after reading the framework: the failure is a *reset while a story ID is queued at save time*, and the game announces every save in advance — every save path in `engine/menus/save.asm` calls `PauseGameLogic` (sets `wGameLogicPaused` = 1) **before** printing "SAVING... DON'T TURN OFF THE POWER", i.e. dozens of frames before `SavePlayerData` copies WRAM. That is the "hook into the save function": a per-frame check of one byte.
 
 Mechanism (park at save, replay at reinstall):

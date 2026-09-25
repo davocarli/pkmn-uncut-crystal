@@ -1,3 +1,4 @@
+; Requires: none
 ; This feature enables the GS Ball event after defeating the Elite 4.
 ; This is intended to mimic functionality from the VC Release.
 

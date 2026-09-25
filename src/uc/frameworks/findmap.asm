@@ -5,12 +5,12 @@
 ; hl = the list. c with hl = the body if found, nc otherwise. Clobbers bc, de
 
 INCLUDE "constants/hardware.inc"
-INCLUDE "module_constants.asm"
+INCLUDE "core/module_constants.asm"
 
 DEF wMapGroup EQU $DCB5 ; bank 1, the map number follows it
 
-SECTION "uc findmap", ROM0[$0AAD]
-LOAD "uc findmap wram", WRAMX[$DAAD], BANK[4] ; window 4, after the safari zone
+SECTION "uc findmap", ROM0[$0A31]
+LOAD "uc findmap wram", WRAMX[$DA31], BANK[4] ; window 4, after the cut encounter table
 
 UCFindMap::
     push hl

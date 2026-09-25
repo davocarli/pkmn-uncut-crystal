@@ -1,5 +1,6 @@
+; Requires: maphijack
 ; Restore Cut Content module: its map-header hijack table. Read by
-; features/maphijack.asm, which owns the format: uc_hijack, its uc_exit rows,
+; frameworks/maphijack.asm, which owns the format: uc_hijack, its uc_exit rows,
 ; uc_exits_end, then the next map; a 0 group ends the table.
 
 INCLUDE "constants/hardware.inc"
@@ -10,10 +11,10 @@ INCLUDE "constants/map_constants.asm"
 INCLUDE "constants/map_data_constants.asm"
 INCLUDE "constants/tileset_constants.asm"
 INCLUDE "constants/music_constants.asm"
-INCLUDE "hijack_constants.asm"
+INCLUDE "frameworks/hijack_constants.asm"
 
-SECTION "uc cut maps", ROM0[$0DE0]
-LOAD "uc cut maps wram", WRAMX[$DDE0], BANK[4] ; window 8, after the hijack
+SECTION "uc cut maps", ROM0[$0DBE]
+LOAD "uc cut maps wram", WRAMX[$DDBE], BANK[4] ; window 8, after the hijack
 
 UCCutMaps::
     ; Mt. Silver exterior on the Celadon beta floor: johto tileset, tree border, 20x18
