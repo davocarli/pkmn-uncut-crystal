@@ -146,6 +146,11 @@ UC_SLOT4_IMAGES = [
     ("UCCutBlocks", "UCCutBlocksEnd"),
     ("UCNpcInject", "UCNpcInjectEnd"),
     ("UCCutInjects", "UCCutInjectsEnd"),
+    ("UCScientistASrc", "UCScientistASrcEnd"),  # injected NPC scripts, in parts: the labels are uc.bin offsets
+    ("UCScientistBSrc", "UCScientistBSrcEnd"),
+    ("UCSailorASrc", "UCSailorASrcEnd"),
+    ("UCSailorBSrc", "UCSailorBSrcEnd"),
+    ("UCSailorCSrc", "UCSailorCSrcEnd"),
     ("UCMapHijack", "UCMapHijackEnd"),
     ("UCCutMaps", "UCCutMapsEnd"),
     # options menu shelved 2026-09-20 (src/uc/shelved/ucoptions.asm), too big for its value
@@ -174,7 +179,8 @@ UC_MODULES = {
     },
     "cut": {
         "bit": 2,
-        "images": ["UCRadio", "UCKantoRoamers", "UCCutEncounters", "UCCutRoller", "UCCutBlocks", "UCCutInjects", "UCCutMaps"],
+        "images": ["UCRadio", "UCKantoRoamers", "UCCutEncounters", "UCCutRoller", "UCCutBlocks", "UCCutInjects",
+                   "UCScientistASrc", "UCScientistBSrc", "UCSailorASrc", "UCSailorBSrc", "UCSailorCSrc", "UCCutMaps"],
         "deps": ["encounters", "blocks", "inject", "maps", "roller"],
     },
     "251": {"bit": 3, "images": ["UC251Encounters"], "deps": ["encounters"]},
@@ -298,15 +304,22 @@ def install_uc_runtime(sav: bytearray):
     patch_save(sav, [(bank, sram, bytes([mask]))])
 
 
+def uc_window_of(label: str, addr: int):
+    """(window row, bank 4 address) of a slot 4 label. A label outside a LOAD block is a uc.bin
+    offset, placed by the window whose bin range holds it (window 5's is $1000 past its addresses)"""
+    for row in UC_SLOT4_WINDOWS:
+        base, _, _, length, binbase = row
+        if addr < 0xD000 and binbase <= addr < binbase + length:
+            return row, base + addr - binbase
+        if addr >= 0xD000 and base <= addr < base + length:
+            return row, addr
+    raise ValueError(f"{label} is outside every slot 4 window")
+
+
 def uc_label_sram(label: str):
     """(bank, sram address) where a slot 4 label lives in the save"""
-    addr = read_sym(UC_SYM)[label]
-    if addr < 0xD000:
-        addr += 0xD000
-    for base, bank, sram, length, _ in UC_SLOT4_WINDOWS:
-        if base <= addr < base + length:
-            return bank, sram + addr - base
-    raise ValueError(f"{label} is outside every slot 4 window")
+    (base, bank, sram, _, _), addr = uc_window_of(label, read_sym(UC_SYM)[label])
+    return bank, sram + addr - base
 
 
 def uc_module_writes(name: str):
@@ -327,17 +340,9 @@ def uc_runtime_writes(images=UC_SLOT4_IMAGES):
     symdata = read_sym(UC_SYM)
     writes = []
     for start, end in images:
-        addr, end_addr = symdata[start], symdata[end]
-        # a label outside a LOAD block is the uc.bin offset itself: bank 4 address minus $D000
-        if addr < 0xD000:
-            addr += 0xD000
-        if end_addr < 0xD000:
-            end_addr += 0xD000
-        for base, bank, sram, length, binbase in UC_SLOT4_WINDOWS:
-            if base <= addr < base + length:
-                break
-        else:
-            raise ValueError(f"{start} is outside every slot 4 window")
+        (base, bank, sram, length, binbase), addr = uc_window_of(start, symdata[start])
+        _, end_addr = uc_window_of(end, symdata[end] if symdata[end] >= 0xD000 else symdata[end] - 1)
+        end_addr += 1  # the end label may sit one past the window
         if end_addr > base + length:
             raise ValueError(f"{start} ends past its slot 4 window")
         offset = binbase + addr - base
@@ -390,6 +395,18 @@ def install_dma_hijack(sav: bytearray):
             sav[offset : offset + size] = bytes(size)
             sav[offset + size] = RET
         sav[wram_to_sav(W_SPECIAL_PHONE_CALL_ID, block)] = SPECIALCALL_ACE
+    fix_checksums(sav)
+
+
+def repair_dma_slots(sav: bytearray):
+    """Re-zero TimoVM's constant-effect slots in both blocks. The slots are nops his dispatcher
+    runs every frame; slot 2/3 sits in wEventFlags (flags 264..599), so an event flag set there
+    becomes an instruction. Builds before 2026-09-25 (later) set flags 300..302 in it."""
+    for block in BLOCKS:
+        for start, size in ((W_SLOT1, SLOT1_SIZE), (W_SLOT23, SLOT23_SIZE)):
+            offset = wram_to_sav(start, block)
+            sav[offset : offset + size] = bytes(size)
+            sav[offset + size] = RET
     fix_checksums(sav)
 
 
@@ -502,7 +519,8 @@ def main(argv: list[str]) -> int:
         f"       {argv[0]} sentinel <in.sav> <out.sav>   (fill SRAM gaps with a marker pattern)\n"
         f"       {argv[0]} sentinel-check <in.sav>       (report gap bytes the game touched)\n"
         f"       {argv[0]} install-timovm <in.sav> <out.sav>  (option (a): Mail Writer + TM15 bootstrap)\n"
-        f"       {argv[0]} install-dma-hijack <in.sav> <out.sav>  (option (b): Special Call ACE + OAM DMA hook)"
+        f"       {argv[0]} install-dma-hijack <in.sav> <out.sav>  (option (b): Special Call ACE + OAM DMA hook)\n"
+        f"       {argv[0]} repair-dma-slots <in.sav> <out.sav>  (re-zero TimoVM's slots after a bad event flag)"
         f"       {argv[0]} install-uc-core <in.sav> <out.sav>     (Uncut Crystal core: loader + kernel image)\n"
         f"       {argv[0]} install-uc-runtime <in.sav> <out.sav>  (Uncut Crystal runtime: slot 4 image)"
     )
@@ -550,6 +568,13 @@ def main(argv: list[str]) -> int:
         report(patched)
         return 0
 
+    if cmd == "repair-dma-slots" and len(argv) == 4:
+        sav = bytearray(open(src, "rb").read())
+        repair_dma_slots(sav)
+        with open(argv[3], "wb") as f:
+            f.write(sav)
+        print(f"wrote {argv[3]}: TimoVM's slots re-zeroed, checksums fixed")
+        return 0
     if cmd == "install-dma-hijack" and len(argv) == 4:
         patched = bytearray(sav)
         install_dma_hijack(patched)

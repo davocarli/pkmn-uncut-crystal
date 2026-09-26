@@ -31,10 +31,14 @@ DEF UC_RECORD_LEN            EQU 13 ; sprite .. event flag, what ReadObjectEvent
 DEF VAR_WEEKDAY              EQU $0B ; readvar id
 DEF VAR_UNOWNCOUNT           EQU $0E ; readvar id: kinds of UNOWN caught
 DEF NUM_UNOWN                EQU 26
-DEF EVENT_UC_OLD_SEA_MAP     EQU 300 ; unused event flags, saved with the game: the scientist's map
-DEF EVENT_UC_SAILOR_OFFERED  EQU 301 ; the sailor has told his story once
-DEF EVENT_UC_FARAWAY_VISITED EQU 302 ; the sailor has taken the player across
-DEF UC_REFRESH_SPRITES       EQU 158 ; RefreshSprites in data/events/special_pointers.asm
+; unused event flags, saved with the game. Never 264..599: that byte range of wEventFlags
+; ($DA93..$DABC) is TimoVM's constant-effect slot, nops his dispatcher runs every frame, so a
+; set bit there becomes an instruction (300..302 made ld [hl], b, which trashed the special
+; call id). 833..999 are unused and clear of every TimoVM structure
+DEF EVENT_UC_OLD_SEA_MAP     EQU 833 ; the scientist's map
+DEF EVENT_UC_SAILOR_OFFERED  EQU 834 ; the sailor has told his story once
+DEF EVENT_UC_FARAWAY_VISITED EQU 835 ; the sailor has taken the player across
+DEF UC_LOAD_USED_SPRITES_GFX EQU 94 ; LoadUsedSpritesGFX in data/events/special_pointers.asm
 
 ; uc_inject MAP, SLOT, X, Y, SPRITE, MOVEMENT, RADIUS_X, RADIUS_Y, PALETTE
 ; opens a row; uc_part rows follow, then a spawn macro and uc_inject_end
@@ -54,10 +58,16 @@ MACRO uc_inject
     dw -1 ; no event flag
 ENDM
 
-; uc_part Name: one fragment of the script, copied in the order the parts are listed
+; uc_part Name[, OFFSET]: one part of the script, copied in the order the parts are listed.
+; OFFSET turns the Src offset into a bank 4 address: $D000, or $C000 for a part in
+; window 5, whose sections assemble $1000 past their address (patcher.py)
 MACRO uc_part
     db UC\1ScriptEnd - UC\1Script ; its length
+    IF _NARG > 1
+    dw UC\1Src + \2
+    ELSE
     dw UC\1Src + $D000 ; where the bytes sit, bank 4
+    ENDC
 ENDM
 
 ; the spawn script, queued once the record is written. appear puts the object on the map.
@@ -69,12 +79,14 @@ MACRO uc_spawn_appear
     end
 ENDM
 
-; same, for a sprite the map does not already carry: RefreshSprites rebuilds wUsedSprites first
-MACRO uc_spawn_reload_appear
+; same, for a sprite the map does not already carry: the injector has put it at the end of
+; wUsedSprites, so LoadUsedSpritesGFX copies its tiles into vram after the map's own, which
+; it copies again where they already are. Nothing on screen moves
+MACRO uc_spawn_load_appear
     db 0 ; end of the parts
     db 6 ; length of the spawn script
     db special_command
-    dw UC_REFRESH_SPRITES
+    dw UC_LOAD_USED_SPRITES_GFX
     appear \1 + 1
     end
 ENDM

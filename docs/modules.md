@@ -38,7 +38,7 @@ group) grouped into **modules** the player picks. Two mechanisms, deliberately s
 | roller | – | `UCRoller` (shared framework, 2026-09-24: rolls a wild battle from a table row on maps with no wild table of their own — the row says where (`UC_ROLL_GRASS`/`UC_ROLL_ANY`), the rate, the level and the placeholder species; listed after `UCMapHijack`'s step half, so an exit warp queues first; its frame half `UCRollerFrame` restores the Unown letter sets the roll unlocked for the battle) | base (`UCFindMap`); listed after maps in the step table |
 | exclusives | 0 | `UCExclusivesTable` | encounters |
 | kanto | 1 | `UCKantoZones`, `UCKantoEncounters` | encounters, zones |
-| cut | 2 | `UCRadio`, `UCKantoRoamers` (one image since 2026-09-25, the map/region tracking and the set swap inside it; owns the save byte `01:DCAF`), `UCCutEncounters` + `UCCutBlocks` (Safari Zone, 2026-09-22; its roll is a `UCCutRoller` row since 2026-09-24, `UCSafari` gone); `UCCutInjects` (empty since 2026-09-25: the sailor and Oak were shelved, injected NPCs to come) + `UCCutMaps` (Mt. Silver exterior, Unused Cave) + `UCCutRoller` (2026-09-24) | encounters, blocks, inject, maps, roller |
+| cut | 2 | `UCRadio`, `UCKantoRoamers` (one image since 2026-09-25, the map/region tracking and the set swap inside it; owns the save byte `01:DCAF`), `UCCutEncounters` + `UCCutBlocks` (Safari Zone, 2026-09-22; its roll is a `UCCutRoller` row since 2026-09-24, `UCSafari` gone); `UCCutInjects` + the NPC script parts `UCScientistASrc`/`UCScientistBSrc`/`UCSailorASrc`/`UCSailorBSrc`/`UCSailorCSrc` (2026-09-25: the research-center scientist and the Cinnabar sailor, `src/uc/npcs/`, stored in parts across windows and copied into `$D2C0` in order) + `UCCutMaps` (Mt. Silver exterior, Unused Cave) + `UCCutRoller` (2026-09-24) | encounters, blocks, inject, maps, roller |
 | 251 | 3 | `UC251Encounters` (2026-09-24: the Kanto starters as the band the cut blocks leave on the two hijacked maps); (caves, Mew/Mewtwo, starter gifts — to come) | encounters; its maps are only reached with cut installed (maps) |
 | qol | 4 | (to come) | – |
 
@@ -73,7 +73,7 @@ Feature files and what each needs:
 | `kanto_zones` | zones |
 | `cut_blocks` | blocks |
 | `cut_encounters` | encounters, roller (maps reached through maphijack) |
-| `cut_injects` | npcinject |
+| `cut_npcs` (+ `npcs/faraway_*.asm`) | npcinject |
 | `cut_maps` | maphijack |
 | `cut_radio`, `cut_roamers` | none |
 | `cut_roller` | roller |

@@ -13,13 +13,13 @@ INCLUDE "constants/tileset_constants.asm"
 INCLUDE "constants/music_constants.asm"
 INCLUDE "frameworks/hijack_constants.asm"
 
-SECTION "uc cut maps", ROM0[$0DBE]
-LOAD "uc cut maps wram", WRAMX[$DDBE], BANK[4] ; window 8, after the hijack
+SECTION "uc cut maps", ROM0[$0DF4]
+LOAD "uc cut maps wram", WRAMX[$DDF4], BANK[4] ; window 8, after the hijack
 
 UCCutMaps::
     ; Mt. Silver exterior on the Celadon beta floor: johto tileset, tree border, 20x18
     uc_hijack CELADON_POKECENTER_2F_BETA, TILESET_JOHTO, TOWN, CeladonPokecenter2FBeta_MapAttributes, $05, 20, 18, $2A, BetaSilverCaveOutside_Blocks, MUSIC_INDIGO_PLATEAU
-    uc_exit 34, UC_ANY_X, OLIVINE_PORT, 7, 16 ; the bottom row, back beside the sailor
+    uc_exit 34, UC_ANY_X, CINNABAR_POKECENTER_1F, 6, 3 ; the bottom row, back below the sailor
     uc_exit 5, 20, CINNABAR_POKECENTER_2F_BETA, 3, 17 ; the cave tile, onto the cave's left mat
     uc_exits_end
 

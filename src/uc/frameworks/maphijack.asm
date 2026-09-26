@@ -31,8 +31,8 @@ DEF GetMapScreenCoords_BANK EQU $41
 DEF LoadBlockData      EQU $24CD ; the block grid from the header
 DEF BufferScreen       EQU $2879 ; saves the 6x5 blocks at the anchor; a reload pastes them back over the grid
 
-SECTION "uc maphijack", ROM0[$0D13]
-LOAD "uc maphijack wram", WRAMX[$DD13], BANK[4] ; window 8, after the inject table
+SECTION "uc maphijack", ROM0[$0D49]
+LOAD "uc maphijack wram", WRAMX[$DD49], BANK[4] ; window 8, after the injector
 
 UCMapHijack::
     db "UC" ; frame code follows
